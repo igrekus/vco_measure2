@@ -6,10 +6,15 @@ import numpy as np
 from collections import defaultdict
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 
-from instr.instrumentfactory import mock_enabled, GeneratorFactory, SourceFactory, \
-    MultimeterFactory, AnalyzerFactory
+from instr.instrumentfactory import mock_enabled, GeneratorFactory, SourceFactory, MultimeterFactory, AnalyzerFactory
 from measureresult import MeasureResult
 from util.file import load_ast_if_exists, pprint_to_file
+
+
+GIGA = 1_000_000_000
+MEGA = 1_000_000
+KILO = 1_000
+MILLI = 1 / 1_000
 
 
 class InstrumentController(QObject):
@@ -25,6 +30,7 @@ class InstrumentController(QObject):
             'Источник': 'GPIB1::3::INSTR',
             'Мультиметр': 'GPIB1::22::INSTR',
         })
+
         self.requiredInstruments = {
             'Анализатор': AnalyzerFactory(addrs['Анализатор']),
             'P LO': GeneratorFactory(addrs['P LO']),
@@ -34,40 +40,42 @@ class InstrumentController(QObject):
         }
 
         self.deviceParams = {
-            'Демодулятор': {
+            'Модулятор': {
                 'F': 1,
             },
         }
 
         self.secondaryParams = load_ast_if_exists('params.ini', default={
-            'Usrc': 5.0,
-            'Flo_min': 1.0,
-            'Flo_max': 3.0,
-            'Flo_delta': 0.5,
-            'is_Flo_x2': False,
             'Plo': -5.0,
-            'Prf': -5.0,
-            'loss': 0.82,
-            'ref_level': 10.0,
-            'scale_y': 5.0,
-            'Umin': 4.75,
-            'Umax': 5.25,
-            'Udelta': 0.05,
+            'Pmod': -5.0,
+            'Flo_min': 0.6,
+            'Flo_max': 6.6,
+            'Flo_delta': 1.0,
+            'is_Flo_div2': False,
+            'Fmod_min': 1.0,   # MHz
+            'Fmod_max': 501.0,   # MHz
+            'Fmod_delta': 10.0,   # MHz
+            'Uoffs': 250,   # mV
+            'Usrc': 5.0,
+            'sa_rlev': 10.0,
+            'sa_scale_y': 10.0,
+            'sa_span': 10.0,   # MHz
+            'sa_avg_state': False,
+            'sa_avg_count': 16,
+            'sep_1': None,
+            'u_min': 4.75,
+            'u_max': 5.25,
+            'u_delta': 0.05,
         })
-
         self._calibrated_pows_lo = load_ast_if_exists('cal_lo.ini', default={})
+        self._calibrated_pows_mod = load_ast_if_exists('cal_mod.ini', default={})
         self._calibrated_pows_rf = load_ast_if_exists('cal_rf.ini', default={})
-
-        self._deltas = load_ast_if_exists('deltas.ini', default={
-            5: 0.9, 10: 0.82, 20: 0.82, 30: 0.82, 40: 0.82, 50: 0.86,
-            60: 0.86, 70: 0.86, 80: 0.86, 90: 0.86, 100: 0.93, 150: 0.98,
-            200: 0.99, 250: 1.02, 300: 1.05, 350: 1.1, 400: 1.15, 450: 1.51
-        })
 
         self._instruments = dict()
         self.found = False
         self.present = False
         self.hasResult = False
+        self.only_main_states = False
 
         self.result = MeasureResult()
 
@@ -97,6 +105,10 @@ class InstrumentController(QObject):
         self._init()
         return True
 
+    def calibrate(self, token, params):
+        print(f'call calibrate with {token} {params}')
+        return self._calibrate(token, self.secondaryParams)
+
     def _calibrateLO(self, token, secondary):
         print('run calibrate LO with', secondary)
 
@@ -105,59 +117,72 @@ class InstrumentController(QObject):
 
         secondary = self.secondaryParams
 
-        pow_lo = secondary['Plo']
-        freq_lo_start = secondary['Flo_min']
-        freq_lo_end = secondary['Flo_max']
-        freq_lo_step = secondary['Flo_delta']
-        freq_lo_x2 = secondary['is_Flo_x2']
+        lo_pow = secondary['Plo']
+        lo_f_start = secondary['Flo_min'] * GIGA
+        lo_f_end = secondary['Flo_max'] * GIGA
+        lo_f_step = secondary['Flo_delta'] * GIGA
+
+        lo_f_is_div2 = secondary['is_Flo_div2']
+
+        sa_rlev = secondary['sa_rlev']
+        sa_scale_y = secondary['sa_scale_y']
+        sa_span = secondary['sa_span'] * MEGA
 
         freq_lo_values = [round(x, 3) for x in
-                          np.arange(start=freq_lo_start, stop=freq_lo_end + 0.0001, step=freq_lo_step)]
+                          np.arange(start=lo_f_start, stop=lo_f_end + 0.0001, step=lo_f_step)]
 
         sa.send(':CAL:AUTO OFF')
         sa.send(':SENS:FREQ:SPAN 1MHz')
         sa.send(f'DISP:WIND:TRAC:Y:RLEV 10')
         sa.send(f'DISP:WIND:TRAC:Y:PDIV 5')
-        sa.send(':CALC:MARK1:MODE POS')
 
+        gen_lo.send(f'SOUR:POW {lo_pow}dbm')
         gen_lo.send(f':OUTP:MOD:STAT OFF')
-        gen_lo.send(f'SOUR:POW {pow_lo}dbm')
 
-        result = {}
+        sa.send(':CALC:MARK1:MODE POS')
+        sa.send(f':SENS:FREQ:SPAN {sa_span}Hz')
+        sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
+        sa.send(f'DISP:WIND:TRAC:Y:PDIV {sa_scale_y}')
+
+        gen_lo.send(f'OUTP:STAT ON')
+
+        result = defaultdict(dict)
         for freq in freq_lo_values:
 
-            if freq_lo_x2:
-                freq *= 2
+            freq_gen = freq
+            if lo_f_is_div2:
+                freq_gen *= 2
 
             if token.cancelled:
                 gen_lo.send(f'OUTP:STAT OFF')
                 time.sleep(0.5)
 
-                gen_lo.send(f'SOUR:POW {pow_lo}dbm')
+                gen_lo.send(f'SOUR:POW {lo_pow}dbm')
 
-                gen_lo.send(f'SOUR:FREQ {freq_lo_start}GHz')
+                gen_lo.send(f'SOUR:FREQ {lo_f_start}GHz')
                 raise RuntimeError('calibration cancelled')
 
-            gen_lo.send(f'SOUR:FREQ {freq}GHz')
-            gen_lo.send(f'OUTP:STAT ON')
+            gen_lo.send(f'SOUR:POW {lo_pow}dbm')
+            gen_lo.send(f'SOUR:FREQ {freq_gen}Hz')
 
             if not mock_enabled:
-                time.sleep(0.35)
+                time.sleep(0.5)
 
-            sa.send(f':SENSe:FREQuency:CENTer {freq}GHz')
-            sa.send(f':CALCulate:MARKer1:X:CENTer {freq}GHz')
+            sa.send(f':SENSe:FREQuency:CENTer {freq_gen}Hz')
 
             if not mock_enabled:
-                time.sleep(0.35)
+                time.sleep(0.5)
 
+            sa.send(f':CALCulate:MARKer1:X {freq_gen}Hz')
             pow_read = float(sa.query(':CALCulate:MARKer:Y?'))
-            loss = abs(pow_lo - pow_read)
+            loss = abs(lo_pow - pow_read)
             if mock_enabled:
                 loss = 10
 
             print('loss: ', loss)
-            result[freq] = loss
+            result[lo_pow][freq_gen] = loss
 
+        result = {k: v for k, v in result.items()}
         pprint_to_file('cal_lo.ini', result)
 
         gen_lo.send(f'OUTP:STAT OFF')
@@ -166,73 +191,199 @@ class InstrumentController(QObject):
         return True
 
     def _calibrateRF(self, token, secondary):
-        print('run calibrate RF with', secondary)
+        print('run calibrate RF')
 
-        gen_rf = self._instruments['P RF']
-        sa = self._instruments['Анализатор']
+        def set_read_marker(freq):
+            sa.send(f':CALCulate:MARKer1:X {freq}Hz')
+            if not mock_enabled:
+                time.sleep(0.01)
+            return float(sa.query(':CALCulate:MARKer:Y?'))
 
         secondary = self.secondaryParams
 
-        freq_lo_start = secondary['Flo_min']
-        freq_lo_end = secondary['Flo_max']
-        freq_lo_step = secondary['Flo_delta']
+        gen_lo = self._instruments['P LO']
+        src = self._instruments['Источник']
+        sa = self._instruments['Анализатор']
 
-        pow_lo = secondary['Plo']
-        pow_rf = secondary['Prf']
+        lo_pow = secondary['Plo']
+        lo_f_start = secondary['Flo_min'] * GIGA
+        lo_f_end = secondary['Flo_max'] * GIGA
+        lo_f_step = secondary['Flo_delta'] * GIGA
 
-        freq_lo_values = [round(x, 3) for x in np.arange(start=freq_lo_start, stop=freq_lo_end + 0.002, step=freq_lo_step)]
-        freq_rf_deltas_and_losses = [[k / 1_000, v] for k, v in self._deltas.items()]
+        lo_f_is_div2 = secondary['is_Flo_div2']
+
+        mod_f_min = secondary['Fmod_min'] * MEGA
+        mod_f_max = secondary['Fmod_max'] * MEGA
+        mod_f_delta = secondary['Fmod_delta'] * MEGA
+
+        src_u = secondary['Usrc']
+        src_i_max = 200   # mA
+
+        sa_rlev = secondary['sa_rlev']
+        sa_scale_y = secondary['sa_scale_y']
+        sa_span = secondary['sa_span'] * MEGA
+        sa_avg_state = 'ON' if secondary['sa_avg_state'] else 'OFF'
+        sa_avg_count = secondary['sa_avg_count']
+
+        mod_f_values = [
+            round(x, 3)for x in
+            np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
+        ]
+
+        freq_lo_values = [
+            round(x, 3) for x in
+            np.arange(start=lo_f_start, stop=lo_f_end + 0.0001, step=lo_f_step)
+        ]
+
+        gen_lo.send(f':OUTP:MOD:STAT OFF')
+
+        src.send(f'APPLY p6v,{src_u}V,{src_i_max}mA')
+        src.send('OUTPut ON')
+
+        # gen_lo.send(f':DM:STAT ON')
+
+        gen_lo.send(f'SOUR:POW {lo_pow}dbm')
 
         sa.send(':CAL:AUTO OFF')
-        sa.send(':SENS:FREQ:SPAN 1MHz')
-        sa.send(f'DISP:WIND:TRAC:Y:RLEV 10')
-        sa.send(f'DISP:WIND:TRAC:Y:PDIV 5')
+        sa.send(f':SENS:FREQ:SPAN {sa_span}')
+        sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
+        sa.send(f'DISP:WIND:TRAC:Y:PDIV {sa_scale_y}')
+        sa.send(f'AVER:COUNT {sa_avg_count}')
+        sa.send(f'AVER {sa_avg_state}')
         sa.send(':CALC:MARK1:MODE POS')
 
-        result = defaultdict(dict)
+        gen_lo.send(f'OUTP:STAT ON')
 
-        for freq_lo in freq_lo_values:
-            for freq_rf_delta, loss in freq_rf_deltas_and_losses:
+        result = defaultdict(dict)
+        for lo_freq in freq_lo_values:
+
+            sa_freq = lo_freq
+
+            if lo_f_is_div2:
+                lo_freq *= 2
+
+            for mod_f in mod_f_values:
 
                 if token.cancelled:
-                    gen_rf.send(f'OUTP:STAT OFF')
+                    gen_lo.send(f'OUTP:STAT OFF')
 
                     time.sleep(0.5)
 
-                    gen_rf.send(f'SOUR:POW {pow_rf}dbm')
-                    gen_rf.send(f'SOUR:FREQ {freq_rf_deltas_and_losses[0][0]}GHz')
-                    raise RuntimeError('calibration cancelled')
+                    src.send('OUTPut OFF')
 
-                freq_rf = freq_lo + freq_rf_delta
-                gen_rf.send(f'SOUR:FREQ {freq_rf}GHz')
-                gen_rf.send(f'SOUR:POW {pow_rf}dbm')
-                gen_rf.send(f'OUTP:STAT ON')
+                    gen_lo.send(f':DM:IQAD OFF')
+                    gen_lo.send(f':DM:STAT OFF')
+                    gen_lo.send(f'SOUR:POW {lo_pow}dbm')
+                    gen_lo.send(f'SOUR:FREQ {lo_f_start}')
+
+                    sa.send(':CAL:AUTO ON')
+                    raise RuntimeError('measurement cancelled')
+
+                if lo_f_is_div2:
+                    sa_center_freq = sa_freq + mod_f
+                else:
+                    sa_center_freq = sa_freq - mod_f
+
+                gen_lo.send(f'SOUR:FREQ {sa_center_freq}')
 
                 if not mock_enabled:
-                    time.sleep(0.35)
+                    time.sleep(0.3)
 
-                center_freq = freq_rf
-                sa.send(f':SENSe:FREQuency:CENTer {center_freq}GHz')
-                sa.send(f':CALCulate:MARKer1:X:CENTer {center_freq}GHz')
+                sa.send(f':SENSe:FREQuency:CENTer {sa_center_freq}')
 
                 if not mock_enabled:
-                    time.sleep(0.35)
+                    time.sleep(0.3)
 
-                pow_read = float(sa.query(':CALCulate:MARKer:Y?'))
-                loss = abs(pow_rf - pow_read)
+                if lo_f_is_div2:
+                    f_out = sa_freq + mod_f
+                    sa_p_out = set_read_marker(f_out)
+                else:
+                    f_out = sa_freq - mod_f
+                    sa_p_out = set_read_marker(f_out)
+
+                pow_read = sa_p_out
+                loss = abs(lo_pow - pow_read)
                 if mock_enabled:
                     loss = 10
 
                 print('loss: ', loss)
-                result[freq_lo][freq_rf_delta] = loss
+                result[lo_freq][mod_f] = loss
+
+        gen_lo.send(f'OUTP:STAT OFF')
+
+        time.sleep(0.5)
+
+        src.send('OUTPut OFF')
+
+        gen_lo.send(f'SOUR:POW {lo_pow}dbm')
+        gen_lo.send(f'SOUR:FREQ {lo_f_start}')
+
+        sa.send(':CAL:AUTO ON')
 
         result = {k: v for k, v in result.items()}
         pprint_to_file('cal_rf.ini', result)
 
-        gen_rf.send(f'OUTP:STAT OFF')
-        sa.send(':CAL:AUTO ON')
         self._calibrated_pows_rf = result
         return True
+
+    def _calibrateMod(self, token, secondary):
+        print('calibrate mod gen')
+
+        secondary = self.secondaryParams
+
+        gen_mod = self._instruments['P RF']
+        sa = self._instruments['Анализатор']
+
+        mod_f_min = secondary['Fmod_min'] * MEGA
+        mod_f_max = secondary['Fmod_max'] * MEGA
+        mod_f_delta = secondary['Fmod_delta'] * MEGA
+        mod_p = secondary['Pmod']
+
+        sa_rlev = secondary['sa_rlev']
+        sa_scale_y = secondary['sa_scale_y']
+        sa_span = secondary['sa_span'] * MEGA
+
+        mod_f_values = [
+            round(x, 3)for x in
+            np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
+        ]
+
+        gen_mod.send(f'SOUR:POW {mod_p}dbm')
+
+        sa.send(':CAL:AUTO OFF')
+        sa.send(f':SENS:FREQ:SPAN {sa_span}')
+        sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
+        sa.send(f'DISP:WIND:TRAC:Y:PDIV {sa_scale_y}')
+        sa.send(':CALC:MARK1:MODE POS')
+
+        gen_mod.send(f'OUTP:STAT ON')
+
+        result = defaultdict(dict)
+        for mod_f in mod_f_values:
+            gen_mod.send(f'SOUR:FREQ {mod_f}')
+
+            time.sleep(0.8)
+
+            sa_freq = mod_f
+            sa.send(f':SENSe:FREQuency:CENTer {sa_freq}')
+
+            time.sleep(0.2)
+
+            sa_p_out = float(sa.query(':CALCulate:MARKer:Y?'))
+            loss = mod_p - sa_p_out
+
+            result[mod_p][mod_f] = loss
+            print('loss:', loss)
+
+        gen_mod.send(f'OUTP:STAT OFF')
+        gen_mod.send(f'SOUR:FREQ {mod_f_min}')
+
+        sa.send(':CAL:AUTO ON')
+
+        result = {k: v for k, v in result.items()}
+        pprint_to_file('cal_mod.ini', result)
+
+        self._calibrated_pows_mod = result
 
     def measure(self, token, params):
         print(f'call measure with {token} {params}')
@@ -252,7 +403,7 @@ class InstrumentController(QObject):
 
         self._clear()
         _, i_res = self._measure_s_params(token, param, secondary)
-        self.result.process_i(i_res)
+        self.result._raw_current = i_res
         return True
 
     def _clear(self):
@@ -266,158 +417,196 @@ class InstrumentController(QObject):
         self._instruments['Анализатор'].send('*RST')
 
     def _measure_s_params(self, token, param, secondary):
+
+        def set_read_marker(freq):
+            sa.send(f':CALCulate:MARKer1:X {freq}Hz')
+            if not mock_enabled:
+                time.sleep(0.01)
+            return float(sa.query(':CALCulate:MARKer:Y?'))
+
         gen_lo = self._instruments['P LO']
-        gen_rf = self._instruments['P RF']
+        gen_mod = self._instruments['P RF']
         src = self._instruments['Источник']
         mult = self._instruments['Мультиметр']
         sa = self._instruments['Анализатор']
 
+        lo_pow = secondary['Plo']
+        lo_f_start = secondary['Flo_min'] * GIGA
+        lo_f_end = secondary['Flo_max'] * GIGA
+        lo_f_step = secondary['Flo_delta'] * GIGA
+
+        lo_f_is_div2 = secondary['is_Flo_div2']
+
+        mod_f_min = secondary['Fmod_min'] * MEGA
+        mod_f_max = secondary['Fmod_max'] * MEGA
+        mod_f_delta = secondary['Fmod_delta'] * MEGA
+        mod_u_offs = secondary['Uoffs'] * MILLI
+        mod_pow = secondary['Pmod']
+
         src_u = secondary['Usrc']
-        src_i = 200   # mA
+        src_i_max = 200   # mA
 
-        u_start = secondary['Umin']
-        u_end = secondary['Umax']
-        u_step = secondary['Udelta']
+        sa_rlev = secondary['sa_rlev']
+        sa_scale_y = secondary['sa_scale_y']
+        sa_span = secondary['sa_span'] * MEGA
+        sa_avg_state = 'ON' if secondary['sa_avg_state'] else 'OFF'
+        sa_avg_count = secondary['sa_avg_count']
 
-        freq_lo_start = secondary['Flo_min']
-        freq_lo_end = secondary['Flo_max']
-        freq_lo_step = secondary['Flo_delta']
-        freq_lo_x2 = secondary['is_Flo_x2']
+        u_start = secondary['u_min']
+        u_end = secondary['u_max']
+        u_step = secondary['u_delta']
 
-        pow_lo = secondary['Plo']
-        pow_rf = secondary['Prf']
+        mod_f_values = [
+            round(x, 3)for x in
+            np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
+        ]
 
-        p_loss = secondary['loss']
-        ref_level = secondary['ref_level']
-        scale_y = secondary['scale_y']
+        freq_lo_values = [
+            round(x, 3) for x in
+            np.arange(start=lo_f_start, stop=lo_f_end + 0.0001, step=lo_f_step)
+        ]
 
-        freq_lo_values = [round(x, 3) for x in np.arange(start=freq_lo_start, stop=freq_lo_end + 0.002, step=freq_lo_step)]
-        freq_rf_deltas_and_losses = [[k / 1_000, v] for k, v in self._deltas.items()]
         u_values = [round(x, 3) for x in np.arange(start=u_start, stop=u_end + 0.002, step=u_step)]
 
-        src.send(f'APPLY p6v,{src_u}V,{src_i}mA')
+        # region main measure
+        gen_lo.send(f':OUTP:MOD:STAT OFF')
+        # gen_lo.send(f':RAD:ARB OFF')
+        # gen_lo.send(f':DM:IQAD:EXT:COFF {mod_u_offs}')
+
+        src.send(f'APPLY p25v,{0.5}V,{50}mA')
+        src.send(f'APPLY p6v,{src_u}V,{src_i_max}mA')
+        src.send('OUTPut ON')
+
+        # gen_lo.send(f':DM:IQAD ON')
+        # gen_lo.send(f':DM:STAT ON')
 
         sa.send(':CAL:AUTO OFF')
-        sa.send(':SENS:FREQ:SPAN 1MHz')
-        sa.send(f'DISP:WIND:TRAC:Y:RLEV {ref_level}')
-        sa.send(f'DISP:WIND:TRAC:Y:PDIV {scale_y}')
+        sa.send(f':SENS:FREQ:SPAN {sa_span}')
+        sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
+        sa.send(f'DISP:WIND:TRAC:Y:PDIV {sa_scale_y}')
+        sa.send(f'AVER:COUNT {sa_avg_count}')
+        sa.send(f'AVER {sa_avg_state}')
+        sa.send(':CALC:MARK1:MODE POS')
 
-        gen_lo.send(f':OUTP:MOD:STAT OFF')
-        # gen_rf.send(f':OUTP:MOD:STAT OFF')
+        gen_lo.send(f'OUTP:STAT ON')
+        gen_mod.send(f'OUTP:STAT ON')
 
         if mock_enabled:
-            with open('./mock_data/-5db.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/-5_1mhz.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
         res = []
-        for freq_lo in freq_lo_values:
+        for lo_freq in freq_lo_values:
 
-            freq_lo_label = float(freq_lo)
-            if freq_lo_x2:
-                freq_lo *= 2
-                freq_lo_label *= 2
+            sa_freq = lo_freq
 
-            gen_lo.send(f'SOUR:FREQ {freq_lo}GHz')
+            if lo_f_is_div2:
+                lo_freq *= 2
 
-            for freq_rf_delta, loss in freq_rf_deltas_and_losses:
+            gen_lo.send(f'SOUR:FREQ {lo_freq}')
+            # gen_lo.send(f':DM:IQAD OFF')
+            # gen_lo.send(f':DM:IQAD ON')
+
+            for mod_f in mod_f_values:
 
                 if token.cancelled:
+                    gen_mod.send(f'OUTP:STAT OFF')
                     gen_lo.send(f'OUTP:STAT OFF')
-                    gen_rf.send(f'OUTP:STAT OFF')
 
-                    if not mock_enabled:
-                        time.sleep(0.5)
+                    time.sleep(0.5)
 
                     src.send('OUTPut OFF')
 
-                    gen_rf.send(f'SOUR:POW {pow_rf}dbm')
-                    gen_lo.send(f'SOUR:POW {pow_lo}dbm')
+                    gen_lo.send(f':DM:IQAD OFF')
+                    gen_lo.send(f':DM:STAT OFF')
+                    gen_lo.send(f'SOUR:POW {lo_pow}dbm')
+                    gen_lo.send(f'SOUR:FREQ {lo_f_start}')
 
-                    gen_rf.send(f'SOUR:FREQ {freq_lo_start + freq_rf_deltas_and_losses[0][0]}GHz')
-                    gen_lo.send(f'SOUR:FREQ {freq_lo_start}GHz')
+                    gen_mod.send(f'SOUR:FREQ {mod_f_min}')
+
+                    sa.send(':CAL:AUTO ON')
                     raise RuntimeError('measurement cancelled')
 
-                delta_lo = round(self._calibrated_pows_lo.get(freq_lo, 0), 2)
-                gen_lo.send(f'SOUR:POW {pow_lo + delta_lo}dbm')
-                delta_rf = round(self._calibrated_pows_rf.get(freq_lo, dict()).get(freq_rf_delta, 0), 2)
-                gen_rf.send(f'SOUR:POW {pow_rf + delta_rf}dbm')
+                lo_loss = self._calibrated_pows_lo.get(lo_pow, dict()).get(lo_freq, 0) / 2
+                mod_loss = self._calibrated_pows_mod.get(mod_pow, dict()).get(mod_f, 0)
+                out_loss = self._calibrated_pows_rf.get(lo_freq, dict()).get(mod_f, 0) / 2
 
-                freq_rf = (freq_lo if not freq_lo_x2 else (freq_lo / 2)) + freq_rf_delta
-                gen_rf.send(f'SOUR:FREQ {freq_rf}GHz')
+                gen_mod.send(f'SOUR:POW {mod_pow + mod_loss}dbm')
+                gen_lo.send(f'SOUR:POW {lo_pow + lo_loss}dbm')
 
-                src.send('OUTPut ON')
-
-                gen_lo.send(f'OUTP:STAT ON')
-                gen_rf.send(f'OUTP:STAT ON')
-
-                time.sleep(0.01)
-                if not mock_enabled:
-                    time.sleep(0.5)
-
-                i_mul_read = float(mult.query('MEAS:CURR:DC? 1A,DEF'))
-
-                center_freq = freq_rf_delta
-                sa.send(':CALC:MARK1:MODE POS')
-                sa.send(f':SENSe:FREQuency:CENTer {center_freq}GHz')
-                sa.send(f':CALCulate:MARKer1:X:CENTer {center_freq}GHz')
+                gen_mod.send(f'SOUR:FREQ {mod_f}')
 
                 if not mock_enabled:
-                    time.sleep(0.5)
+                    time.sleep(0.3)
 
-                pow_read = float(sa.query(':CALCulate:MARKer:Y?'))
+                if lo_f_is_div2:
+                    sa_center_freq = sa_freq + mod_f
+                else:
+                    sa_center_freq = sa_freq - mod_f
+
+                sa.send(f':SENSe:FREQuency:CENTer {sa_center_freq}')
+
+                if not mock_enabled:
+                    time.sleep(0.3)
+
+                if lo_f_is_div2:
+                    f_out = sa_freq + mod_f
+                    sa_p_out = set_read_marker(f_out)
+                else:
+                    f_out = sa_freq - mod_f
+                    sa_p_out = set_read_marker(f_out)
+
+                src_u_read = src_u
+                src_i_read = float(mult.query('MEAS:CURR:DC? 1A,DEF'))
 
                 raw_point = {
-                    'f_lo': freq_lo,
-                    'f_lo_label': freq_lo_label,
-                    'f_rf': freq_rf,
-                    'p_lo': pow_lo,
-                    'p_rf': pow_rf,
-                    'fpch': freq_rf_delta,
-                    'u_mul': src_u,
-                    'i_mul': i_mul_read,
-                    'pow_read': pow_read,
-                    'loss': loss,
+                    'lo_p': lo_pow,
+                    'lo_f': lo_freq,
+                    'mod_f': mod_f,
+                    'src_u': src_u_read,   # power source voltage as set in GUI
+                    'src_i': src_i_read,
+                    'sa_p_out': sa_p_out,
+                    'out_loss': out_loss,
                 }
 
                 if mock_enabled:
+                    # TODO record new test data
                     raw_point = mocked_raw_data[index]
-                    raw_point['loss'] = loss
-                    raw_point['fpch'] = freq_rf_delta
-                    raw_point['f_lo_label'] = freq_lo_label
+                    raw_point['out_loss'] = out_loss
                     index += 1
 
                 print(raw_point)
-
                 res.append(raw_point)
                 self._add_measure_point(raw_point)
+
+        gen_mod.send(f'OUTP:STAT OFF')
+        gen_lo.send(f'OUTP:STAT OFF')
+
+        time.sleep(0.5)
+
+        src.send('OUTPut OFF')
+
+        gen_lo.send(f':DM:STAT OFF')
+        gen_lo.send(f'SOUR:POW {lo_pow}dbm')
+        gen_lo.send(f'SOUR:FREQ {lo_f_start}')
+        gen_mod.send(f'SOUR:FREQ {mod_f_min}')
+
+        sa.send(':CAL:AUTO ON')
 
         if not mock_enabled:
             with open('out.txt', mode='wt', encoding='utf-8') as f:
                 f.write(str(res))
+        # endregion
 
-        gen_lo.send(f'OUTP:STAT OFF')
-        gen_rf.send(f'OUTP:STAT OFF')
-
-        if not mock_enabled:
-            time.sleep(0.5)
-
-        src.send('OUTPut OFF')
-
-        gen_rf.send(f'SOUR:POW {pow_rf}dbm')
-        gen_lo.send(f'SOUR:POW {pow_lo}dbm')
-
-        gen_rf.send(f'SOUR:FREQ {freq_lo_start + freq_rf_deltas_and_losses[0][0]}GHz')
-        gen_lo.send(f'SOUR:FREQ {freq_lo_start}GHz')
-
-        sa.send(':CAL:AUTO ON')
-
-        # measure current
-        # temporary hacky implementation
+        # region measure current
         if mock_enabled:
             with open('./mock_data/current.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
+
+        # gen_lo.send(f':DM:IQAD OFF')
+        # gen_lo.send(f':DM:IQAD ON')
 
         i_res = []
         for u in u_values:
@@ -425,19 +614,17 @@ class InstrumentController(QObject):
                 src.send('OUTPut OFF')
                 raise RuntimeError('measurement cancelled')
 
-            src.send(f'APPLY p6v,{u}V,{src_i}mA')
+            src.send(f'APPLY p6v,{u}V,{src_i_max}mA')
             src.send('OUTPut ON')
 
             time.sleep(0.1)
             if not mock_enabled:
                 time.sleep(0.5)
 
-            # u_mul_read = float(mult.query('MEAS:VOLT?'))
             i_mul_read = float(mult.query('MEAS:CURR:DC? 1A,DEF'))
 
             raw_point = {
                 'u_mul': u,
-                # 'u_mul': u_mul_read,
                 'i_mul': i_mul_read * 1_000,
             }
 
@@ -447,12 +634,14 @@ class InstrumentController(QObject):
                 index += 1
 
             print(raw_point)
-
             i_res.append(raw_point)
 
         if not mock_enabled:
             time.sleep(0.5)
+
+        gen_lo.send(f':DM:IQAD OFF')
         src.send('OUTPut OFF')
+        # endregion
         return res, i_res
 
     def _add_measure_point(self, data):

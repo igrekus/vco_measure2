@@ -4,15 +4,15 @@ import time
 
 from subprocess import Popen
 
-from PyQt5.QtGui import QGuiApplication
 from PyQt5 import uic
+from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from formlayout.formlayout import fedit
 from instrumentcontroller import InstrumentController
-from connectionwidget import ConnectionWidget
-from measurewidget import MeasureWidgetWithSecondaryParameters
+from measurewidgetwithsecondaryparams import MeasureWidgetWithSecondaryParameters
+from mytools.connectionwidget import ConnectionWidget
 from primaryplotwidget import PrimaryPlotWidget
 
 
@@ -55,7 +55,6 @@ class MainWindow(QMainWindow):
         self._instrumentController.pointReady.connect(self.on_point_ready)
 
         self._measureWidget.updateWidgets(self._instrumentController.secondaryParams)
-        self._measureWidget.on_params_changed(1)
 
     def _saveScreenshot(self):
         screen = QGuiApplication.primaryScreen()
@@ -64,7 +63,7 @@ class MainWindow(QMainWindow):
             return
         pixmap = screen.grabWindow(self.winId())
 
-        device = 'demod'
+        device = 'mod'
         path = 'png'
         if not os.path.isdir(f'{path}'):
             os.makedirs(f'{path}')
@@ -82,6 +81,7 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def on_measureComplete(self):
         print('meas complete')
+        self._instrumentController.result._process()
         self._plotWidget.plot()
         self._instrumentController.result.save_adjustment_template()
 
