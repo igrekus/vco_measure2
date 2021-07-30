@@ -10,11 +10,35 @@ from instr.instrumentfactory import mock_enabled, GeneratorFactory, SourceFactor
 from measureresult import MeasureResult
 from util.file import load_ast_if_exists, pprint_to_file
 
-
 GIGA = 1_000_000_000
 MEGA = 1_000_000
 KILO = 1_000
 MILLI = 1 / 1_000
+
+
+class SecondaryParams:
+    def __init__(self, required):
+        self._required = required
+        self._params = None
+
+    @property
+    def params(self):
+        if self._params is None:
+            self._params = {
+                k: v[1]['value'] for k, v in self._required.items()
+            }
+        return self._params
+
+    @params.setter
+    def params(self, d):
+        self._params = d
+
+    @property
+    def required(self):
+        return dict(**self._required)
+
+    def load_from_config(self, file):
+        self.params = load_ast_if_exists(file, default=self.params)
 
 
 class InstrumentController(QObject):
@@ -45,28 +69,89 @@ class InstrumentController(QObject):
             },
         }
 
-        self.secondaryParams = load_ast_if_exists('params.ini', default={
-            'Plo': -5.0,
-            'Pmod': -5.0,
-            'Flo_min': 0.6,
-            'Flo_max': 6.6,
-            'Flo_delta': 1.0,
-            'is_Flo_div2': False,
-            'Fmod_min': 1.0,   # MHz
-            'Fmod_max': 501.0,   # MHz
-            'Fmod_delta': 10.0,   # MHz
-            'Uoffs': 250,   # mV
-            'Usrc': 5.0,
-            'sa_rlev': 10.0,
-            'sa_scale_y': 10.0,
-            'sa_span': 10.0,   # MHz
-            'sa_avg_state': False,
-            'sa_avg_count': 16,
-            'sep_1': None,
-            'u_min': 4.75,
-            'u_max': 5.25,
-            'u_delta': 0.05,
-        })
+        self.secondaryParams = SecondaryParams(
+            required={
+                'Plo': [
+                    'Pгет=',
+                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': -5.0, 'suffix': ' дБм'}
+                ],
+                'Pmod': [
+                    'Pмод=',
+                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': -5.0, 'suffix': ' дБм'}
+                ],
+                'Flo_min': [
+                    'Fгет.мин=',
+                    {'start': 0.0, 'end': 40.0, 'step': 1.0, 'decimals': 3, 'value': 0.6, 'suffix': ' ГГц'}
+                ],
+                'Flo_max': [
+                    'Fгет.макс=',
+                    {'start': 0.0, 'end': 40.0, 'step': 1.0, 'decimals': 3, 'value': 6.6, 'suffix': ' ГГц'}
+                ],
+                'Flo_delta': [
+                    'ΔFгет=',
+                    {'start': 0.0, 'end': 40.0, 'step': 0.1, 'decimals': 3, 'value': 1.0, 'suffix': ' ГГц'}
+                ],
+                'is_Flo_div2': [
+                    '1/2 Fгет.',
+                    {'value': False}
+                ],
+                'Fmod_min': [
+                    'Fмод.мин=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 1.0, 'suffix': ' МГц'}
+                ],
+                'Fmod_max': [
+                    'Fмод.макс=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 501.0, 'suffix': ' МГц'}
+                ],
+                'Fmod_delta': [
+                    'ΔFмод=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 10.0, 'suffix': ' МГц'}
+                ],
+                'Uoffs': [
+                    'Uсм=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1, 'decimals': 1, 'value': 250.0, 'suffix': ' мВ'}
+                ],
+                'Usrc': [
+                    'Uпит.=',
+                    {'start': 4.75, 'end': 5.25, 'step': 0.25, 'value': 5.0, 'suffix': ' В'}
+                ],
+                'sa_rlev': [
+                    'Ref. lev.=',
+                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
+                ],
+                'sa_scale_y': [
+                    'Scale y=',
+                    {'start': 0.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
+                ],
+                'sa_span': [
+                    'Span=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'value': 10.0, 'suffix': ' МГц'}
+                ],
+                'sa_avg_state': [
+                    'Avg.state=',
+                    {'value': False}
+                ],
+                'sa_avg_count': [
+                    'Avg.count=',
+                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'value': 16.0, 'suffix': ''}
+                ],
+                'sep_1': ['', {'value': None}],
+                'u_min': [
+                    'Uмин.=',
+                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 4.75, 'suffix': ' В'}
+                ],
+                'u_max': [
+                    'Uмакс.=',
+                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 5.25, 'suffix': ' В'}
+                ],
+                'u_delta': [
+                    'ΔU=',
+                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 0.05, 'suffix': ' В'}
+                ],
+            }
+        )
+        self.secondaryParams.load_from_config('params.ini')
+
         self._calibrated_pows_lo = load_ast_if_exists('cal_lo.ini', default={})
         self._calibrated_pows_mod = load_ast_if_exists('cal_mod.ini', default={})
         self._calibrated_pows_rf = load_ast_if_exists('cal_rf.ini', default={})
@@ -217,7 +302,7 @@ class InstrumentController(QObject):
         mod_f_delta = secondary['Fmod_delta'] * MEGA
 
         src_u = secondary['Usrc']
-        src_i_max = 200   # mA
+        src_i_max = 200  # mA
 
         sa_rlev = secondary['sa_rlev']
         sa_scale_y = secondary['sa_scale_y']
@@ -226,7 +311,7 @@ class InstrumentController(QObject):
         sa_avg_count = secondary['sa_avg_count']
 
         mod_f_values = [
-            round(x, 3)for x in
+            round(x, 3) for x in
             np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
         ]
 
@@ -344,7 +429,7 @@ class InstrumentController(QObject):
         sa_span = secondary['sa_span'] * MEGA
 
         mod_f_values = [
-            round(x, 3)for x in
+            round(x, 3) for x in
             np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
         ]
 
@@ -398,7 +483,7 @@ class InstrumentController(QObject):
 
     def _measure(self, token, device):
         param = self.deviceParams[device]
-        secondary = self.secondaryParams
+        secondary = self.secondaryParams.params
         print(f'launch measure with {token} {param} {secondary}')
 
         self._clear()
@@ -444,7 +529,7 @@ class InstrumentController(QObject):
         mod_pow = secondary['Pmod']
 
         src_u = secondary['Usrc']
-        src_i_max = 200   # mA
+        src_i_max = 200  # mA
 
         sa_rlev = secondary['sa_rlev']
         sa_scale_y = secondary['sa_scale_y']
@@ -457,7 +542,7 @@ class InstrumentController(QObject):
         u_step = secondary['u_delta']
 
         mod_f_values = [
-            round(x, 3)for x in
+            round(x, 3) for x in
             np.arange(start=mod_f_min, stop=mod_f_max + 0.0002, step=mod_f_delta)
         ]
 
@@ -564,7 +649,7 @@ class InstrumentController(QObject):
                     'lo_p': lo_pow,
                     'lo_f': lo_freq,
                     'mod_f': mod_f,
-                    'src_u': src_u_read,   # power source voltage as set in GUI
+                    'src_u': src_u_read,  # power source voltage as set in GUI
                     'src_i': src_i_read,
                     'sa_p_out': sa_p_out,
                     'out_loss': out_loss,
@@ -650,11 +735,11 @@ class InstrumentController(QObject):
         self.pointReady.emit()
 
     def saveConfigs(self):
-        pprint_to_file('params.ini', self.secondaryParams)
+        pprint_to_file('params.ini', self.secondaryParams.params)
 
     @pyqtSlot(dict)
     def on_secondary_changed(self, params):
-        self.secondaryParams = params
+        self.secondaryParams.params = params
 
     @property
     def status(self):

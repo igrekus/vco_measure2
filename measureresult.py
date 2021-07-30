@@ -81,7 +81,7 @@ class MeasureResult:
         self.ready = False
 
     def set_secondary_params(self, params):
-        self._secondaryParams = dict(**params)
+        self._secondaryParams = dict(**params.params)
 
     def add_point(self, data):
         self._raw.append(data)
