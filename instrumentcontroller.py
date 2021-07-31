@@ -8,37 +8,13 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 
 from instr.instrumentfactory import mock_enabled, GeneratorFactory, SourceFactory, MultimeterFactory, AnalyzerFactory
 from measureresult import MeasureResult
+from secondaryparams import SecondaryParams
 from util.file import load_ast_if_exists, pprint_to_file
 
 GIGA = 1_000_000_000
 MEGA = 1_000_000
 KILO = 1_000
 MILLI = 1 / 1_000
-
-
-class SecondaryParams:
-    def __init__(self, required):
-        self._required = required
-        self._params = None
-
-    @property
-    def params(self):
-        if self._params is None:
-            self._params = {
-                k: v[1]['value'] for k, v in self._required.items()
-            }
-        return self._params
-
-    @params.setter
-    def params(self, d):
-        self._params = d
-
-    @property
-    def required(self):
-        return dict(**self._required)
-
-    def load_from_config(self, file):
-        self.params = load_ast_if_exists(file, default=self.params)
 
 
 class InstrumentController(QObject):
