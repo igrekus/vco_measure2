@@ -25,18 +25,12 @@ class InstrumentController(QObject):
 
         addrs = load_ast_if_exists('instr.ini', default={
             'Анализатор': 'GPIB1::18::INSTR',
-            'P LO': 'GPIB1::6::INSTR',
-            'P RF': 'GPIB1::20::INSTR',
             'Источник': 'GPIB1::3::INSTR',
-            'Мультиметр': 'GPIB1::22::INSTR',
         })
 
         self.requiredInstruments = {
             'Анализатор': AnalyzerFactory(addrs['Анализатор']),
-            'P LO': GeneratorFactory(addrs['P LO']),
-            'P RF': GeneratorFactory(addrs['P RF']),
             'Источник': SourceFactory(addrs['Источник']),
-            'Мультиметр': MultimeterFactory(addrs['Мультиметр']),
         }
 
         self.deviceParams = {
