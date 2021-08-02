@@ -84,7 +84,7 @@ class InstrumentController(QObject):
                 'ΔUп',
                 {'start': 0.0, 'end': 100.0, 'step': 1.0, 'value': 10.0, 'suffix': ' %'}
             ],
-            'p_out_2': [
+            'is_p_out_2': [
                 'Выход 2',
                 {'value': False}
             ],
