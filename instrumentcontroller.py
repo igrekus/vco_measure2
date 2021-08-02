@@ -34,92 +34,61 @@ class InstrumentController(QObject):
         }
 
         self.deviceParams = {
-            'Модулятор': {
+            'ГУН': {
                 'F': 1,
             },
         }
 
-        self.secondaryParams = SecondaryParams(
-            required={
-                'Plo': [
-                    'Pгет=',
-                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': -5.0, 'suffix': ' дБм'}
-                ],
-                'Pmod': [
-                    'Pмод=',
-                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': -5.0, 'suffix': ' дБм'}
-                ],
-                'Flo_min': [
-                    'Fгет.мин=',
-                    {'start': 0.0, 'end': 40.0, 'step': 1.0, 'decimals': 3, 'value': 0.6, 'suffix': ' ГГц'}
-                ],
-                'Flo_max': [
-                    'Fгет.макс=',
-                    {'start': 0.0, 'end': 40.0, 'step': 1.0, 'decimals': 3, 'value': 6.6, 'suffix': ' ГГц'}
-                ],
-                'Flo_delta': [
-                    'ΔFгет=',
-                    {'start': 0.0, 'end': 40.0, 'step': 0.1, 'decimals': 3, 'value': 1.0, 'suffix': ' ГГц'}
-                ],
-                'is_Flo_div2': [
-                    '1/2 Fгет.',
-                    {'value': False}
-                ],
-                'Fmod_min': [
-                    'Fмод.мин=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 1.0, 'suffix': ' МГц'}
-                ],
-                'Fmod_max': [
-                    'Fмод.макс=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 501.0, 'suffix': ' МГц'}
-                ],
-                'Fmod_delta': [
-                    'ΔFмод=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'decimals': 3, 'value': 10.0, 'suffix': ' МГц'}
-                ],
-                'Uoffs': [
-                    'Uсм=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1, 'decimals': 1, 'value': 250.0, 'suffix': ' мВ'}
-                ],
-                'Usrc': [
-                    'Uпит.=',
-                    {'start': 4.75, 'end': 5.25, 'step': 0.25, 'value': 5.0, 'suffix': ' В'}
-                ],
-                'sa_rlev': [
-                    'Ref. lev.=',
-                    {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
-                ],
-                'sa_scale_y': [
-                    'Scale y=',
-                    {'start': 0.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
-                ],
-                'sa_span': [
-                    'Span=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'value': 10.0, 'suffix': ' МГц'}
-                ],
-                'sa_avg_state': [
-                    'Avg.state=',
-                    {'value': False}
-                ],
-                'sa_avg_count': [
-                    'Avg.count=',
-                    {'start': 0.0, 'end': 1000.0, 'step': 1.0, 'value': 16.0, 'suffix': ''}
-                ],
-                'sep_1': ['', {'value': None}],
-                'u_min': [
-                    'Uмин.=',
-                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 4.75, 'suffix': ' В'}
-                ],
-                'u_max': [
-                    'Uмакс.=',
-                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 5.25, 'suffix': ' В'}
-                ],
-                'u_delta': [
-                    'ΔU=',
-                    {'start': 0.0, 'end': 30.0, 'step': 0.05, 'value': 0.05, 'suffix': ' В'}
-                ],
-            }
-        )
+        self.secondaryParams = SecondaryParams(required={
+            'u_src': [
+                'Uп=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 3.0, 'suffix': ' В'}
+            ],
+            'i_src_max': [
+                'Iп.макс=',
+                {'start': 0.0, 'end': 500.0, 'step': 1.0, 'value': 50.0, 'suffix': ' мА'}
+            ],
+            'u_vco_min': [
+                'Uмин.=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 0.0, 'suffix': ' В'}
+            ],
+            'u_vco_max': [
+                'Uмин.=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 10.0, 'suffix': ' В'}
+            ],
+            'u_vco_delta': [
+                'ΔU=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 1.0, 'suffix': ' В'}
+            ],
+            'sa_center': [
+                'Center=',
+                {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
+            ],
+            'sa_span': [
+                'Span=',
+                {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
+            ],
+            'sa_rlev': [
+                'Ref lev=',
+                {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
+            ],
+            'is_harm_relative': [
+                'Отн.ур.гармоник',
+                {'value': False}
+            ],
+            'is_u_src_drift': [
+                'Дрейф от Uп',
+                {'value': False}
+            ],
+            'u_src_drift': [
+                'ΔUп',
+                {'start': 0.0, 'end': 100.0, 'step': 1.0, 'value': 10.0, 'suffix': ' %'}
+            ],
+            'p_out_2': [
+                'Выход 2',
+                {'value': False}
+            ],
+        })
         self.secondaryParams.load_from_config('params.ini')
 
         self._calibrated_pows_lo = load_ast_if_exists('cal_lo.ini', default={})
