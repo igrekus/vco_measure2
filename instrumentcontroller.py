@@ -286,9 +286,8 @@ class InstrumentController(QObject):
         src.send('OUTPut OFF')
         sa.send(':CAL:AUTO ON')
 
-        if not mock_enabled:
-            with open('out.txt', mode='wt', encoding='utf-8') as f:
-                f.write(str(result))
+        with open('out.txt', mode='wt', encoding='utf-8') as f:
+            f.write(str(result))
         # endregion
 
     def _add_measure_point(self, data):
