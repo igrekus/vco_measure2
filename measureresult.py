@@ -16,14 +16,22 @@ class MeasureResult:
     def __init__(self):
         self._secondaryParams = None
         self._raw = list()
-        self._raw_current = list()
+        self._raw_x2 = list()
+        self._raw_x3 = list()
+
         self._report = dict()
+
         self._processed = list()
-        self._processed_currents = list()
+        self._processed_x2 = list()
+        self._processed_x3 = list()
+
         self.ready = False
 
         self.data1 = defaultdict(list)
-        self.data2 = dict()
+        self.data2 = defaultdict(list)
+
+        self.data3 = dict()
+        self.data4 = dict()
 
         self.adjustment = load_ast_if_exists('adjust.ini', default=None)
 
@@ -31,52 +39,59 @@ class MeasureResult:
         return self.ready
 
     def _process(self):
-        currents = [list(d.values()) for d in self._raw_current]
-        self.data2[1] = currents
-        self._processed_currents = currents
+        harm_x2 = [list(d.values()) for d in self._raw_x2]
+        self.data3[1] = harm_x2
+        self._processed_x2 = harm_x2
+
+        harm_x3 = [list(d.values()) for d in self._raw_x3]
+        self.data4[1] = harm_x3
+        self._processed_x3 = harm_x3
+
         self.ready = True
 
     def _process_point(self, data):
-        lo_p = data['lo_p']
-        lo_f = data['lo_f']
-        mod_f = data['mod_f']
 
-        src_u = data['src_u']
-        src_i = data['src_i'] / MILLI
+        u_src = data['u_src']
+        u_control = data['u_control']
 
-        out_loss = data['out_loss']
-        sa_p_out = data['sa_p_out'] + out_loss
+        f_tune = data['read_f']
+        p_out = data['read_p']
+        i_src = data['read_i']
 
         if self.adjustment is not None:
             point = self.adjustment[len(self._processed)]
-            sa_p_out += point['p_out']
+            f_tune += point['f_tune']
+            p_out += point['p_out']
+            i_src += point['i_src']
 
         self._report = {
-            'lo_p': lo_p,
-            'lo_f': round(lo_f / GIGA, 3),
-            'out_loss': out_loss,
-
-            'p_out': round(sa_p_out, 2),
-
-            'src_u': src_u,
-            'src_i': round(src_i, 2),
+            'u_src': u_src,
+            'u_control': u_control,
+            'f_tune': f_tune,
+            'p_out': p_out,
+            'i_src': i_src,
         }
 
-        lo_f_label = lo_f / GIGA
-        mod_f_label = mod_f / MEGA
-        self.data1[lo_f_label].append([mod_f_label, sa_p_out])
+        self.data1[u_src].append([u_control, f_tune])
+        self.data2[u_src].append([u_control, p_out])
         self._processed.append({**self._report})
 
     def clear(self):
         self._secondaryParams.clear()
         self._raw.clear()
-        self._raw_current.clear()
+        self._raw_x2.clear()
+        self._raw_x3.clear()
+
         self._report.clear()
+
         self._processed.clear()
-        self._processed_currents.clear()
+        self._processed_x2.clear()
+        self._processed_x3.clear()
 
         self.data1.clear()
         self.data2.clear()
+        self.data3.clear()
+        self.data4.clear()
 
         self.ready = False
 
@@ -91,25 +106,24 @@ class MeasureResult:
         if self.adjustment is None:
             print('measured, saving template')
             self.adjustment = [{
-                'lo_p': p['lo_p'],
-                'lo_f': p['lo_f'],
+                'u_src': p['u_src'],
+                'u_control': p['u_control'],
+                'f_tune': 0,
                 'p_out': 0,
+                'i_src': 0,
 
             } for p in self._processed]
             pprint_to_file('adjust.ini', self.adjustment)
 
     @property
     def report(self):
-        return dedent("""        Генератор:
-        Pгет, дБм={lo_p}
-        Fгет, ГГц={lo_f:0.2f}
-        Pпот, дБ={out_loss:0.2f}
-
-        Источник питания:
-        U, В={src_u}
-        I, мА={src_i}
+        return dedent("""        Источник питания:
+        Uпит, В={u_src}
+        Uупр, В={u_control}
+        Iпот, mA={i_src}
 
         Анализатор:
+        Fвых, МГц={f_tune:0.3f}
         Pвых, дБм={p_out:0.3f}
         """.format(**self._report))
 
@@ -138,6 +152,6 @@ class MeasureResult:
         path = 'xlsx'
 
         file_name = f'./{path}/{device}-curr-{now_timestamp()}.xlsx'
-        df = pd.DataFrame(self._processed_currents, columns=['Uпит, В', 'Iпот, мА'])
+        df = pd.DataFrame(self._processed_x2, columns=['Uпит, В', 'Iпот, мА'])
 
         df.to_excel(file_name, engine='openpyxl', index=False)
