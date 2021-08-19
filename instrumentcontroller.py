@@ -252,11 +252,13 @@ class InstrumentController(QObject):
                 src.send(f'APPLY p6v,{u_drift}V,{i_src_max}A')
                 src.send(f'APPLY p25v,{u_control}V,{i_tune_max}A')
 
-                time.sleep(1)
+                if not mock_enabled:
+                    time.sleep(1)
 
                 sa.send('CALC:MARK1:MAX')
 
-                time.sleep(0.1)
+                if not mock_enabled:
+                    time.sleep(0.1)
 
                 read_f = float(sa.query(f'CALC1:MARK1:X?')) / MEGA
                 read_p = float(sa.query(f'CALC1:MARK1:Y?'))
