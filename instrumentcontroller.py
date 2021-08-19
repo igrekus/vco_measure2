@@ -103,7 +103,6 @@ class InstrumentController(QObject):
         self.found = False
         self.present = False
         self.hasResult = False
-        self.only_main_states = False
 
         self.result = MeasureResult()
 
@@ -165,6 +164,7 @@ class InstrumentController(QObject):
 
     def _init(self):
         self._instruments['Источник'].send('*RST')
+        self._instruments['Источник'].send('OUTP OFF')
         self._instruments['Анализатор'].send('*RST')
     # endregion
 
@@ -175,7 +175,7 @@ class InstrumentController(QObject):
             self.result.set_secondary_params(self.secondaryParams)
             self._measure(token, device)
             # self.hasResult = bool(self.result)
-            self.hasResult = True  # HACK
+            self.hasResult = True  # TODO HACK
         except RuntimeError as ex:
             print('runtime error:', ex)
 
@@ -185,105 +185,109 @@ class InstrumentController(QObject):
         print(f'launch measure with {token} {param} {secondary}')
 
         self._clear()
-        _ = self._measure_s_params(token, param, secondary)
+        self._measure_tune(token, param, secondary)
         return True
 
-    def _measure_s_params(self, token, param, secondary):
+    def _measure_tune(self, token, param, secondary):
 
-        def set_read_marker(freq):
-            sa.send(f':CALCulate:MARKer1:X {freq}Hz')
+        def find_peak_read_marker(freq):
+            sa.send("CALC:MARK1:MAX")
             if not mock_enabled:
-                time.sleep(0.01)
-            return float(sa.query(':CALCulate:MARKer:Y?'))
+                time.sleep(0.1)
+
+            freq = float(sa.query(":CALC:MARK1:X?"))
+            pow_ = float(sa.query(":CALC:MARK1:Y?"))
+            return freq, pow_
 
         src = self._instruments['Источник']
         sa = self._instruments['Анализатор']
 
-        src_u = secondary['u_src']
-        src_i_max = secondary['i_src_max'] * MILLI
+        i_src_max = secondary['i_src_max'] * MILLI
 
-        vco_u_min = secondary['u_vco_min']
-        vco_u_max = secondary['u_vco_max']
-        vco_u_delta = secondary['u_vco_delta']
+        u_tune_min = secondary['u_vco_min']
+        u_tune_max = secondary['u_vco_max']
+        u_tune_step = secondary['u_vco_delta']
+        i_tune_max = 10 * MILLI
 
-        sa_center = secondary['sa_center'] * GIGA
-        sa_span = secondary['sa_span'] * GIGA
-        sa_rlev = secondary['sa_rlev'] * GIGA
+        sa_f_start = secondary['sa_min'] * GIGA
+        sa_f_stop = secondary['sa_max'] * GIGA
+        sa_rlev = secondary['sa_rlev']
+        sa_span = secondary['sa_span'] * MEGA
 
-        is_harm_relative = secondary['is_harm_relative']
+        u_dr_1 = secondary['u_src_drift1']
+        u_dr_2 = secondary['u_src_drift2']
+        u_dr_3 = secondary['u_src_drift3']
 
-        is_src_u_drift = secondary['is_u_src_drift']
-        src_u_drift = secondary['u_src_drift']
-
-        is_p_out_2 = secondary['is_p_out_2']
-
-        vco_u_values = [
-            round(x, 2) for x in
-            np.arange(start=vco_u_min, stop=vco_u_max + 0.0002, step=vco_u_delta)
-        ]
+        u_control_values = [round(x, 2) for x in np.arange(start=u_tune_min, stop=u_tune_max + 0.002, step=u_tune_step)]
+        u_drift_values = [u for u in [u_dr_1, u_dr_2, u_dr_3] if u]
 
         # region main measure
         # TODO set source according to the source model
-        src.send(f'APPLY p25v,{src_u}V,{src_i_max}A')
-        src.send('OUTPut ON')
+        src.send(f'APPLY p6v,{u_dr_1}V,{i_src_max}A')
+        src.send(f'APPLY p25v,{u_control_values[0]}V,{i_tune_max}A')
 
-        sa.send(':CAL:AUTO OFF')
-        sa.send(f':SENS:FREQ:SPAN {sa_span}')
         sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
-        sa.send(f'DISP:WIND:TRAC:Y:PDIV 10')
-        # sa.send(f'AVER:COUNT {sa_avg_count}')
-        # sa.send(f'AVER {sa_avg_state}')
+        sa.send(f':SENS:FREQ:STAR {sa_f_start}Hz')
+        sa.send(f':SENS:FREQ:STOP {sa_f_stop}Hz')
+        sa.send(':CAL:AUTO OFF')
         sa.send(':CALC:MARK1:MODE POS')
 
+        src.send('OUTP ON')
+
         # TODO record sample data
-        # if mock_enabled:
-        #     with open('./mock_data/-5_1mhz.txt', mode='rt', encoding='utf-8') as f:
-        #         index = 0
-        #         mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
+        if mock_enabled:
+            with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
+                index = 0
+                mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
-        res = []
-        for vco_u in vco_u_values:
+        result = []
+        for u_drift in u_drift_values:
+            for u_control in u_control_values:
 
-            if token.cancelled:
-                src.send('OUTPut OFF')
-                sa.send(':CAL:AUTO ON')
-                raise RuntimeError('measurement cancelled')
+                if token.cancelled:
+                    src.send('OUTP OFF')
+                    sa.send(':CAL:AUTO ON')
+                    raise RuntimeError('measurement cancelled')
 
-            # TODO implement calibrations if needed
-            # lo_loss = self._calibrated_pows_lo.get(lo_pow, dict()).get(lo_freq, 0) / 2
-            # mod_loss = self._calibrated_pows_mod.get(mod_pow, dict()).get(mod_f, 0)
-            # out_loss = self._calibrated_pows_rf.get(lo_freq, dict()).get(mod_f, 0) / 2
+                src.send(f'APPLY p6v,{u_drift}V,{i_src_max}A')
+                src.send(f'APPLY p25v,{u_control}V,{i_tune_max}A')
 
-            src.send(f'APPLY p25v,{vco_u}V,{src_i_max}A')
+                time.sleep(1)
 
-            if not mock_enabled:
-                time.sleep(0.5)
+                sa.send('CALC:MARK1:MAX')
 
-            sa_center_freq = 0
-            sa.send(f':SENSe:FREQuency:CENTer {sa_center_freq}')
+                time.sleep(0.1)
 
-            raw_point = {
-                'src_u': src_u,
-                'vco_u': vco_u,
-            }
+                read_f = float(sa.query(f'CALC1:MARK1:X?')) / MEGA
+                read_p = float(sa.query(f'CALC1:MARK1:Y?'))
 
-            # if mock_enabled:
-            #     raw_point = mocked_raw_data[index]
-            #     raw_point['out_loss'] = out_loss
-            #     index += 1
+                read_i = float(src.query('MEAS:CURR? p6v')) * MEGA
 
-            print(raw_point)
-            res.append(raw_point)
-            self._add_measure_point(raw_point)
+                raw_point = {
+                    'u_src': u_drift,
+                    'u_control': u_control,
+                    'read_f': read_f,
+                    'read_p': read_p,
+                    'read_i': read_i,
+                }
+
+                print('measured point:', raw_point)
+
+                if mock_enabled:
+                    raw_point = mocked_raw_data[index]
+                    index += 1
+
+                self._add_measure_point(raw_point)
+
+                result.append(raw_point)
 
         src.send('OUTPut OFF')
         sa.send(':CAL:AUTO ON')
 
         if not mock_enabled:
             with open('out.txt', mode='wt', encoding='utf-8') as f:
-                f.write(str(res))
+                f.write(str(result))
         # endregion
-        return res
 
     def _add_measure_point(self, data):
         print('measured point:', data)
