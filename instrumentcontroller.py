@@ -190,7 +190,7 @@ class InstrumentController(QObject):
 
     def _measure_tune(self, token, param, secondary):
 
-        def find_peak_read_marker(freq):
+        def find_peak_read_marker():
             sa.send("CALC:MARK1:MAX")
             if not mock_enabled:
                 time.sleep(0.1)
@@ -255,22 +255,15 @@ class InstrumentController(QObject):
                 if not mock_enabled:
                     time.sleep(1)
 
-                sa.send('CALC:MARK1:MAX')
-
-                if not mock_enabled:
-                    time.sleep(0.1)
-
-                read_f = float(sa.query(f'CALC1:MARK1:X?')) / MEGA
-                read_p = float(sa.query(f'CALC1:MARK1:Y?'))
-
-                read_i = float(src.query('MEAS:CURR? p6v')) * MEGA
+                read_f, read_p = find_peak_read_marker()
+                read_i = float(src.query('MEAS:CURR? p6v'))
 
                 raw_point = {
                     'u_src': u_drift,
                     'u_control': u_control,
-                    'read_f': read_f,
+                    'read_f': read_f / MEGA,
                     'read_p': read_p,
-                    'read_i': read_i,
+                    'read_i': read_i * MEGA,
                 }
 
                 print('measured point:', raw_point)
