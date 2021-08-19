@@ -214,16 +214,16 @@ class InstrumentController(QObject):
         sa_rlev = secondary['sa_rlev']
         sa_span = secondary['sa_span'] * MEGA
 
-        u_dr_1 = secondary['u_src_drift1']
-        u_dr_2 = secondary['u_src_drift2']
-        u_dr_3 = secondary['u_src_drift3']
+        u_src_drift_1 = secondary['u_src_drift_1']
+        u_src_drift_2 = secondary['u_src_drift_2']
+        u_src_drift_3 = secondary['u_src_drift_3']
 
         u_control_values = [round(x, 2) for x in np.arange(start=u_tune_min, stop=u_tune_max + 0.002, step=u_tune_step)]
-        u_drift_values = [u for u in [u_dr_1, u_dr_2, u_dr_3] if u]
+        u_drift_values = [u for u in [u_src_drift_1, u_src_drift_2, u_src_drift_3] if u]
 
         # region main measure
         # TODO set source according to the source model
-        src.send(f'APPLY p6v,{u_dr_1}V,{i_src_max}A')
+        src.send(f'APPLY p6v,{u_src_drift_1}V,{i_src_max}A')
         src.send(f'APPLY p25v,{u_control_values[0]}V,{i_tune_max}A')
 
         sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
