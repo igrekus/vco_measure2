@@ -40,54 +40,58 @@ class InstrumentController(QObject):
         }
 
         self.secondaryParams = SecondaryParams(required={
-            'u_src': [
+            'u_src_drift_1': [
                 'Uп=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 3.0, 'suffix': ' В'}
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
+            ],
+            'u_src_drift_2': [
+                'Uдр. мин=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 5.0, 'suffix': ' В'}
+            ],
+            'u_src_drift_3': [
+                'Uдр. макс=',
+                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 5.3, 'suffix': ' В'}
             ],
             'i_src_max': [
                 'Iп.макс=',
                 {'start': 0.0, 'end': 500.0, 'step': 1.0, 'value': 50.0, 'suffix': ' мА'}
             ],
             'u_vco_min': [
-                'Uмин.=',
+                'Uупр.мин.=',
                 {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 0.0, 'suffix': ' В'}
             ],
             'u_vco_max': [
-                'Uмин.=',
+                'Uупр.мин.=',
                 {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 10.0, 'suffix': ' В'}
             ],
             'u_vco_delta': [
-                'ΔU=',
+                'ΔUупр=',
                 {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 1.0, 'suffix': ' В'}
             ],
-            'sa_center': [
-                'Center=',
+            'sa_min': [
+                'SA min=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
-            'sa_span': [
-                'Span=',
+            'sa_max': [
+                'SA max=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
             'sa_rlev': [
-                'Ref lev=',
+                'SA Ref lev=',
                 {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
             ],
-            'is_harm_relative': [
-                'Отн.ур.гармоник',
-                {'value': False}
+            'sa_span': [
+                'SA span=',
+                {'start': 0.0, 'end': 30000.0, 'step': 1.0, 'value': 50.0, 'suffix': ' МГц'}
             ],
-            'is_u_src_drift': [
-                'Дрейф от Uп',
-                {'value': False}
-            ],
-            'u_src_drift': [
-                'ΔUп',
-                {'start': 0.0, 'end': 100.0, 'step': 1.0, 'value': 10.0, 'suffix': ' %'}
-            ],
-            'is_p_out_2': [
-                'Выход 2',
-                {'value': False}
-            ],
+            # 'is_harm_relative': [
+            #     'Отн.ур.гармоник',
+            #     {'value': False}
+            # ],
+            # 'is_u_src_drift': [
+            #     'Дрейф от Uп',
+            #     {'value': False}
+            # ],
         })
         self.secondaryParams.load_from_config('params.ini')
 
