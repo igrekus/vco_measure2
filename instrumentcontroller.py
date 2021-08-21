@@ -185,7 +185,8 @@ class InstrumentController(QObject):
         print(f'launch measure with {token} {param} {secondary}')
 
         self._clear()
-        self._measure_tune(token, param, secondary)
+        _, x2, x3 = self._measure_tune(token, param, secondary)
+        self.result.add_harmonics_measurement(x2, x3)
         return True
 
     def _measure_tune(self, token, param, secondary):
@@ -198,6 +199,44 @@ class InstrumentController(QObject):
             freq = float(sa.query(":CALC:MARK1:X?"))
             pow_ = float(sa.query(":CALC:MARK1:Y?"))
             return freq, pow_
+
+        def measure_harmonics(multiplier):
+            print('measure harmonics:', multiplier)
+            r = []
+            sa.send(f':SENS:FREQ:SPAN {sa_span}')
+            for uc, f in pairs:
+
+                if token.cancelled:
+                    src.send('OUTP OFF')
+                    sa.send(':CAL:AUTO ON')
+                    raise RuntimeError('measurement cancelled')
+
+                src.send(f'APPLY p6v,{u_src_drift_1}V,{i_src_max}A')
+                src.send(f'APPLY p25v,{uc}V,{i_tune_max}A')
+
+                if not mock_enabled:
+                    time.sleep(1)
+
+                f_xmul = f * multiplier
+                sa.send(f':SENS:FREQ:CENT {f_xmul}Hz')
+
+                if not mock_enabled:
+                    time.sleep(0.5)
+
+                sa.send('CALC:MARK1:MAX')
+
+                if not mock_enabled:
+                    time.sleep(0.05)
+
+                read_p = float(sa.query(f'CALC1:MARK1:Y?'))
+
+                point = {
+                    'u_control': uc,
+                    'read_p': read_p,
+                }
+                r.append(point)
+
+            return r
 
         src = self._instruments['Источник']
         sa = self._instruments['Анализатор']
@@ -276,12 +315,25 @@ class InstrumentController(QObject):
 
                 result.append(raw_point)
 
+        with open('out.txt', mode='wt', encoding='utf-8') as out_file:
+            out_file.write(str(result))
+
+        pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_1]
+
+        result_harmonics_x2 = measure_harmonics(multiplier=2)
+        result_harmonics_x3 = measure_harmonics(multiplier=3)
+
+        if mock_enabled:
+            with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
+            with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
+        # endregion
+
         src.send('OUTPut OFF')
         sa.send(':CAL:AUTO ON')
 
-        with open('out.txt', mode='wt', encoding='utf-8') as f:
-            f.write(str(result))
-        # endregion
+        return result, result_harmonics_x2, result_harmonics_x3
 
     def _add_measure_point(self, data):
         print('measured point:', data)
