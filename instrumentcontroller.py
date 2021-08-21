@@ -273,7 +273,6 @@ class InstrumentController(QObject):
 
         src.send('OUTP ON')
 
-        # TODO record sample data
         if mock_enabled:
             with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
