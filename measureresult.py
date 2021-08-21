@@ -1,18 +1,18 @@
 import os
-import datetime
 
 from collections import defaultdict
-from subprocess import Popen
 from textwrap import dedent
 
 import pandas as pd
 
 from util.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
-from util.const import *
 from util.string import now_timestamp
 
 
 class MeasureResult:
+    device = 'vco'
+    path = 'xlsx'
+
     def __init__(self):
         self._secondaryParams = None
         self._raw = list()
@@ -39,6 +39,7 @@ class MeasureResult:
         return self.ready
 
     def _process(self):
+        print('lol process')
         harm_x2 = [list(d.values()) for d in self._raw_x2]
         self.data3[1] = harm_x2
         self._processed_x2 = harm_x2
@@ -49,8 +50,11 @@ class MeasureResult:
 
         self.ready = True
 
-    def _process_point(self, data):
+    def add_harmonics_measurement(self, x2, x3):
+        self._raw_x2 = list(x2)
+        self._raw_x3 = list(x3)
 
+    def _process_point(self, data):
         u_src = data['u_src']
         u_control = data['u_control']
 
@@ -128,30 +132,30 @@ class MeasureResult:
         """.format(**self._report))
 
     def export_excel(self):
-        device = 'mod'
-        path = 'xlsx'
+        make_dirs(self.path)
 
-        make_dirs(path)
-
-        file_name = f'./{path}/{device}-pout-{now_timestamp()}.xlsx'
+        file_name = f'./{self.path}/{self.device}-tune-{now_timestamp()}.xlsx'
         df = pd.DataFrame(self._processed)
 
         df.columns = [
-            'Pгет, дБм', 'Fгет, ГГц', 'Pпот, дБ',
-            'Loss rf, дБм',
-            'Uпит, В', 'Iпит, мА',
+            'Uпит, В', 'Uупр, В',
+            'Fвых, МГц', 'Pвых, дБм', 'Iпот, мА',
         ]
         df.to_excel(file_name, engine='openpyxl', index=False)
 
-        self._export_current()
+        self._export_x2()
+        self._export_x3()
 
         open_explorer_at(os.path.abspath(file_name))
 
-    def _export_current(self):
-        device = 'mod'
-        path = 'xlsx'
-
-        file_name = f'./{path}/{device}-curr-{now_timestamp()}.xlsx'
+    def _export_x2(self):
+        file_name = f'./{self.path}/{self.device}-curr-{now_timestamp()}.xlsx'
         df = pd.DataFrame(self._processed_x2, columns=['Uпит, В', 'Iпот, мА'])
+
+        df.to_excel(file_name, engine='openpyxl', index=False)
+
+    def _export_x3(self):
+        file_name = f'./{self.path}/{self.device}-curr-{now_timestamp()}.xlsx'
+        df = pd.DataFrame(self._processed_x3, columns=['Uпит, В', 'Iпот, мА'])
 
         df.to_excel(file_name, engine='openpyxl', index=False)
