@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSignal, QTimer
 
 from mytools.measurewidget import MeasureWidget, MeasureTask, CancelToken
-from util.file import remove_if_exists
+from forgot_again.file import remove_if_exists
 
 
 class MeasureWidgetWithSecondaryParameters(MeasureWidget):

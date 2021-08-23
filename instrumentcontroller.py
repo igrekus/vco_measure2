@@ -5,11 +5,11 @@ import numpy as np
 
 from collections import defaultdict
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
+from forgot_again.file import load_ast_if_exists, pprint_to_file
 
 from instr.instrumentfactory import mock_enabled, GeneratorFactory, SourceFactory, MultimeterFactory, AnalyzerFactory
 from measureresult import MeasureResult
 from secondaryparams import SecondaryParams
-from util.file import load_ast_if_exists, pprint_to_file
 
 GIGA = 1_000_000_000
 MEGA = 1_000_000

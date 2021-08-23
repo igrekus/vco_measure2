@@ -6,8 +6,8 @@ from collections import defaultdict
 from textwrap import dedent
 from openpyxl.chart import LineChart, Series, Reference
 
-from util.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
-from util.string import now_timestamp
+from forgot_again.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
+from forgot_again.string import now_timestamp
 
 
 class MeasureResult:
