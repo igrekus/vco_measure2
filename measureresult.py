@@ -12,10 +12,11 @@ from forgot_again.string import now_timestamp
 
 class MeasureResult:
     device = 'vco'
+    measurement_name = 'tune'
     path = 'xlsx'
 
     def __init__(self):
-        self._secondaryParams = None
+        self._secondaryParams = dict()
         self._raw = list()
         self._raw_x2 = list()
         self._raw_x3 = list()
@@ -40,7 +41,6 @@ class MeasureResult:
         return self.ready
 
     def _process(self):
-        print('lol process')
         harm_x2 = [list(d.values()) for d in self._raw_x2]
         self.data3[1] = harm_x2
         self._processed_x2 = harm_x2
@@ -134,7 +134,10 @@ class MeasureResult:
 
     def export_excel(self):
         make_dirs(self.path)
-        file_name = f'./{self.path}/{self.device}-tune-{now_timestamp()}.xlsx'
+        fn = self._secondaryParams.get('file_name', None) or f'{self.device}-{self.measurement_name}-{now_timestamp()}'
+        file_name = f'./{self.path}/{fn}.xlsx'
+
+        print(fn, file_name, self._secondaryParams)
 
         u_dr_1, u_dr_2, u_dr_3 = 0, 0, 0
 
@@ -166,10 +169,6 @@ class MeasureResult:
         df['Pвых_2отн, дБм'] = df[df['Pвых_2, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_2, дБм']), axis=1)
         df['Pвых_3отн, дБм'] = df[df['Pвых_3, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_3, дБм']), axis=1)
         df['S, МГц/В'] = df['S, МГц/В'].fillna(0)
-
-        print(u_dr_1)
-        print(u_dr_2)
-        print(u_dr_3)
 
         df_udr_1 = df[df['Uпит, В'] == u_dr_1]
         df_udr_2 = df[df['Uпит, В'] == u_dr_2]

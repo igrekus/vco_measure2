@@ -194,6 +194,7 @@ class InstrumentController(QObject):
         self._clear()
         _, x2, x3 = self._measure_tune(token, param, secondary)
         self.result.add_harmonics_measurement(x2, x3)
+        self.result.set_secondary_params(self.secondaryParams)
         return True
 
     def _measure_tune(self, token, param, secondary):
