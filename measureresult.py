@@ -172,9 +172,12 @@ class MeasureResult:
         df_udr_2 = df[df['Uпит, В'] == u_dr_2]
         df_udr_3 = df[df['Uпит, В'] == u_dr_3]
 
+        cols = len(df_udr_1.columns)
+        rows = len(df_udr_1)
+
         udr_1_s = [df_udr_1.columns.values.tolist()] + df_udr_1.values.tolist()
-        udr_2_s = [df_udr_2.columns.values.tolist()] + df_udr_2.values.tolist()
-        udr_3_s = [df_udr_3.columns.values.tolist()] + df_udr_3.values.tolist()
+        udr_2_s = [df_udr_2.columns.values.tolist()] + (df_udr_2.values.tolist() or [[''] * cols] * rows)
+        udr_3_s = [df_udr_3.columns.values.tolist()] + (df_udr_3.values.tolist() or [[''] * cols] * rows)
 
         print(udr_1_s)
         print(udr_2_s)
@@ -190,8 +193,6 @@ class MeasureResult:
 
         for row in out:
             ws.append(row)
-
-        rows = len(udr_1_s)
 
         _add_chart(
             ws=ws,
