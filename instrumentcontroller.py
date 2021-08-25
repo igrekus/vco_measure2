@@ -83,6 +83,10 @@ class InstrumentController(QObject):
                 'SA span=',
                 {'start': 0.0, 'end': 30000.0, 'step': 1.0, 'value': 50.0, 'suffix': ' МГц'}
             ],
+            'file_name': [
+                'SA span=',
+                {'value': 'test', }
+            ],
             # 'is_harm_relative': [
             #     'Отн.ур.гармоник',
             #     {'value': False}
