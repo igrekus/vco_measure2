@@ -3,8 +3,9 @@ import openpyxl
 import pandas as pd
 
 from collections import defaultdict
-from textwrap import dedent
 from openpyxl.chart import LineChart, Series, Reference
+from openpyxl.chart.axis import ChartLines
+from textwrap import dedent
 
 from forgot_again.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
 from forgot_again.string import now_timestamp
@@ -116,7 +117,6 @@ class MeasureResult:
                 'f_tune': 0,
                 'p_out': 0,
                 'i_src': 0,
-
             } for p in self._processed]
             pprint_to_file('adjust.ini', self.adjustment)
 
@@ -136,8 +136,6 @@ class MeasureResult:
         make_dirs(self.path)
         fn = self._secondaryParams.get('file_name', None) or f'{self.device}-{self.measurement_name}-{now_timestamp()}'
         file_name = f'./{self.path}/{fn}.xlsx'
-
-        print(fn, file_name, self._secondaryParams)
 
         u_dr_1, u_dr_2, u_dr_3 = 0, 0, 0
 
@@ -197,57 +195,61 @@ class MeasureResult:
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B1:B{rows + 1}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!C1:C{rows + 1}'),
-                Reference(ws, range_string=f'{ws.title}!O1:O{rows + 1}'),
-                Reference(ws, range_string=f'{ws.title}!AA1:AA{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!C2:C{rows}'),
+                Reference(ws, range_string=f'{ws.title}!O2:O{rows}'),
+                Reference(ws, range_string=f'{ws.title}!AA2:AA{rows}'),
             ],
             title='Диапазон перестройки',
             loc='B15',
-            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В']
+            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
+            ax_titles=['Uупр, В', 'Fвых, МГц'],
         )
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B1:B{rows + 1}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!D1:D{rows + 1}'),
-                Reference(ws, range_string=f'{ws.title}!P1:P{rows + 1}'),
-                Reference(ws, range_string=f'{ws.title}!AB1:AB{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!D2:D{rows}'),
+                Reference(ws, range_string=f'{ws.title}!P2:P{rows}'),
+                Reference(ws, range_string=f'{ws.title}!AB2:AB{rows}'),
             ],
             title='Мощность',
             loc='M15',
-            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В']
+            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
+            ax_titles=['Uупр, В', 'Pвых, дБм'],
         )
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B1:B{rows + 1}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!I1:I{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!I2:I{rows}'),
             ],
             title='Относительный уровень 2й гармоники',
             loc='B30',
-            curve_labels=['Uпит = 4.7В']
+            curve_labels=['Uпит = 4.7В'],
+            ax_titles=['Uупр, В', 'Pвых х2, МГц'],
         )
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B1:B{rows + 1}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!J1:J{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!J2:J{rows}'),
             ],
             title='Относительный уровень 3й гармоники',
             loc='M30',
-            curve_labels=['Uпит = 4.7В']
+            curve_labels=['Uпит = 4.7В'],
+            ax_titles=['Uупр, В', 'Pвых х3, МГц'],
         )
 
         wb.save(file_name)
         open_explorer_at(os.path.abspath(file_name))
 
 
-def _add_chart(ws, xs, ys, title, loc, curve_labels=None):
+def _add_chart(ws, xs, ys, title, loc, curve_labels=None, ax_titles=None):
     chart = LineChart()
 
     for y, label in zip(ys, curve_labels):
@@ -256,5 +258,13 @@ def _add_chart(ws, xs, ys, title, loc, curve_labels=None):
 
     chart.set_categories(xs)
     chart.title = title
+
+    chart.x_axis.minorGridlines = ChartLines()
+    chart.x_axis.tickLblPos = 'low'
+
+    if ax_titles:
+        chart.x_axis.title = ax_titles[0]
+        chart.y_axis.title = ax_titles[1]
+    # chart.x_axis.tickLblSkip = 3
 
     ws.add_chart(chart, loc)
