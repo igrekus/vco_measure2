@@ -16,9 +16,9 @@ KILO = 1_000
 MILLI = 1 / 1_000
 
 
-# TODO add file name widget
-# todo fix excel plots (grid , labels)
-# todo fix excel export when one measurement
+# [x] TODO add file name widget
+# [x] todo fix excel plots (grid, labels)
+# [x] todo fix excel export when one measurement
 
 class InstrumentController(QObject):
     pointReady = pyqtSignal()
