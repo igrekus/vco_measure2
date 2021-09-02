@@ -99,6 +99,8 @@ class MeasureResult:
         self.data3.clear()
         self.data4.clear()
 
+        self.adjustment = load_ast_if_exists('adjust.ini', default=None)
+
         self.ready = False
 
     def set_secondary_params(self, params):

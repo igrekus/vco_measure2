@@ -84,6 +84,7 @@ class MeasureWidgetWithSecondaryParameters(MeasureWidget):
             self._token.cancelled = True
 
     def on_params_changed(self):
+        self._uiDebouncer.start(1000)
         self.secondaryChanged.emit(self._paramInputWidget.params)
 
     def updateWidgets(self, params):
