@@ -45,15 +45,15 @@ class InstrumentController(QObject):
         self.secondaryParams = SecondaryParams(required={
             'u_src_drift_1': [
                 'Uп=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
+                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
             ],
             'u_src_drift_2': [
                 'Uдр. мин=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 5.0, 'suffix': ' В'}
+                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.0, 'suffix': ' В'}
             ],
             'u_src_drift_3': [
                 'Uдр. макс=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'value': 5.3, 'suffix': ' В'}
+                {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.3, 'suffix': ' В'}
             ],
             'i_src_max': [
                 'Iп.макс=',
@@ -61,15 +61,15 @@ class InstrumentController(QObject):
             ],
             'u_vco_min': [
                 'Uупр.мин.=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 0.0, 'suffix': ' В'}
+                {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 0.0, 'suffix': ' В'}
             ],
             'u_vco_max': [
                 'Uупр.мин.=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 10.0, 'suffix': ' В'}
+                {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 10.0, 'suffix': ' В'}
             ],
             'u_vco_delta': [
                 'ΔUупр=',
-                {'start': -10.0, 'end': 10.0, 'step': 0.5, 'decimals': 2, 'value': 1.0, 'suffix': ' В'}
+                {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 1.0, 'suffix': ' В'}
             ],
             'sa_min': [
                 'SA min=',
@@ -282,7 +282,8 @@ class InstrumentController(QObject):
         src.send('OUTP ON')
 
         if mock_enabled:
-            with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/4.7-0-0.txt', mode='rt', encoding='utf-8') as f:
+            # with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
