@@ -7,7 +7,7 @@ TODO:
 - [x] add file name widget
 - [x] fix excel plots (grid, labels)
 - [x] fix excel export when one measurement
-- [ ] переименовать окно
+- [x] rename main window
 - [ ] выпилить калибровки
 - [ ] удалить выпадающий список (?)
 - [ ] переименовать параметра

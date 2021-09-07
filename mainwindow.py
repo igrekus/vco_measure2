@@ -28,18 +28,20 @@ class MainWindow(QMainWindow):
         self.setAttribute(Qt.WA_QuitOnClose)
         self.setAttribute(Qt.WA_DeleteOnClose)
 
-        # create instance variables
-        self._ui = uic.loadUi('mainwindow.ui', self)
         self._instrumentController = InstrumentController(parent=self)
         self._connectionWidget = ConnectionWidget(parent=self, controller=self._instrumentController)
         self._measureWidget = MeasureWidgetWithSecondaryParameters(parent=self, controller=self._instrumentController)
         self._plotWidget = PrimaryPlotWidget(parent=self, controller=self._instrumentController)
 
         # init UI
+        self._ui = uic.loadUi('mainwindow.ui', self)
+        self.setWindowTitle('Измерение ГУНов')
+
         self._ui.layInstrs.insertWidget(0, self._connectionWidget)
         self._ui.layInstrs.insertWidget(1, self._measureWidget)
+        self._ui.tabWidget.insertTab(0, self._plotWidget, 'Прогресс измерения')
 
-        self._ui.tabWidget.insertTab(0, self._plotWidget, 'Автоматическое измерение')
+        # specific UI tweaks
 
         self._init()
 
