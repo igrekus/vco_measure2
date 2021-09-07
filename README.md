@@ -8,7 +8,7 @@ TODO:
 - [x] fix excel plots (grid, labels)
 - [x] fix excel export when one measurement
 - [x] rename main window
-- [ ] выпилить калибровки
+- [x] remove calibration buttons
 - [ ] удалить выпадающий список (?)
 - [ ] переименовать параметра
 - [ ] группы параметров

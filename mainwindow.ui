@@ -14,7 +14,7 @@
    <string>Измерение демодуляторов</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,0,12">
+   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,10">
     <item>
      <layout class="QVBoxLayout" name="layInstrs">
       <property name="spacing">
