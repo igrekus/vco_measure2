@@ -39,6 +39,7 @@ class InstrumentController(QObject):
         }
 
         self.secondaryParams = SecondaryParams(required={
+            'sep_4': ['', {'value': None}],
             'u_src_drift_1': [
                 'Uп=',
                 {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
@@ -55,36 +56,39 @@ class InstrumentController(QObject):
                 'Iп.макс=',
                 {'start': 0.0, 'end': 500.0, 'step': 1.0, 'value': 50.0, 'suffix': ' мА'}
             ],
+            'sep_1': ['', {'value': None}],
             'u_vco_min': [
                 'Uупр.мин.=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 0.0, 'suffix': ' В'}
             ],
             'u_vco_max': [
-                'Uупр.мин.=',
+                'Uупр.макс.=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 10.0, 'suffix': ' В'}
             ],
             'u_vco_delta': [
                 'ΔUупр=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'decimals': 2, 'value': 1.0, 'suffix': ' В'}
             ],
+            'sep_2': ['', {'value': None}],
             'sa_min': [
-                'SA min=',
+                'SA start=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
             'sa_max': [
-                'SA max=',
+                'SA stop=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
             'sa_rlev': [
-                'SA Ref lev=',
+                'SA ref lev=',
                 {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
             ],
             'sa_span': [
                 'SA span=',
                 {'start': 0.0, 'end': 30000.0, 'step': 1.0, 'value': 50.0, 'suffix': ' МГц'}
             ],
+            'sep_3': ['', {'value': None}],
             'file_name': [
-                'SA span=',
+                'Имя файла=',
                 {'value': 'test', }
             ],
             # 'is_harm_relative': [
