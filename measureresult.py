@@ -43,10 +43,12 @@ class MeasureResult:
 
     def _process(self):
         harm_x2 = [list(d.values()) for d in self._raw_x2]
+        harm_x2 = _find_deltas(harm_x2, self._processed)
         self.data3[1] = harm_x2
         self._processed_x2 = harm_x2
 
         harm_x3 = [list(d.values()) for d in self._raw_x3]
+        harm_x3 = _find_deltas(harm_x3, self._processed)
         self.data4[1] = harm_x3
         self._processed_x3 = harm_x3
 
@@ -271,3 +273,7 @@ def _add_chart(ws, xs, ys, title, loc, curve_labels=None, ax_titles=None):
     # chart.x_axis.tickLblSkip = 3
 
     ws.add_chart(chart, loc)
+
+
+def _find_deltas(harm, origin):
+    return [[harm[0], -(main['p_out'] - harm[1])] for harm, main in zip(harm, origin)]
