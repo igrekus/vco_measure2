@@ -205,11 +205,11 @@ class MeasureResult:
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!C2:C{rows}'),
-                Reference(ws, range_string=f'{ws.title}!O2:O{rows}'),
-                Reference(ws, range_string=f'{ws.title}!AA2:AA{rows}'),
+                Reference(ws, range_string=f'{ws.title}!C2:C{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!O2:O{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!AA2:AA{rows + 1}'),
             ],
             title='Диапазон перестройки',
             loc='B15',
@@ -219,11 +219,11 @@ class MeasureResult:
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!D2:D{rows}'),
-                Reference(ws, range_string=f'{ws.title}!P2:P{rows}'),
-                Reference(ws, range_string=f'{ws.title}!AB2:AB{rows}'),
+                Reference(ws, range_string=f'{ws.title}!D2:D{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!P2:P{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!AB2:AB{rows + 1}'),
             ],
             title='Мощность',
             loc='M15',
@@ -233,9 +233,9 @@ class MeasureResult:
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!I2:I{rows}'),
+                Reference(ws, range_string=f'{ws.title}!I2:I{rows + 1}'),
             ],
             title='Относительный уровень 2й гармоники',
             loc='B30',
@@ -245,9 +245,9 @@ class MeasureResult:
 
         _add_chart(
             ws=ws,
-            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
-                Reference(ws, range_string=f'{ws.title}!J2:J{rows}'),
+                Reference(ws, range_string=f'{ws.title}!J2:J{rows + 1}'),
             ],
             title='Относительный уровень 3й гармоники',
             loc='M30',
