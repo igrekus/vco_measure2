@@ -10,6 +10,11 @@ from textwrap import dedent
 from forgot_again.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
 from forgot_again.string import now_timestamp
 
+GIGA = 1_000_000_000
+MEGA = 1_000_000
+KILO = 1_000
+MILLI = 1 / 1_000
+
 
 class MeasureResult:
     device = 'vco'
@@ -62,9 +67,9 @@ class MeasureResult:
         u_src = data['u_src']
         u_control = data['u_control']
 
-        f_tune = data['read_f']
+        f_tune = data['read_f'] / MEGA
         p_out = data['read_p']
-        i_src = data['read_i']
+        i_src = data['read_i'] / MILLI
 
         if self.adjustment is not None:
             point = self.adjustment[len(self._processed)]
