@@ -219,6 +219,8 @@ class MeasureResult:
             ws.append(row)
 
         top_left_cell: Cell = ws.cell(row=rows + 4, column=2)
+        dx = 9
+        dy = 15
 
         _add_chart(
             ws=ws,
@@ -243,7 +245,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!AB2:AB{rows + 1}'),
             ],
             title='Мощность',
-            loc=top_left_cell.offset(0, 12).coordinate,
+            loc=top_left_cell.offset(0, dx).coordinate,
             curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
             ax_titles=['Uупр, В', 'Pвых, дБм'],
         )
@@ -255,7 +257,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!I2:I{rows + 1}'),
             ],
             title='Относительный уровень 2й гармоники',
-            loc=top_left_cell.offset(15, 0).coordinate,
+            loc=top_left_cell.offset(dy, 0).coordinate,
             curve_labels=['Uпит = 4.7В'],
             ax_titles=['Uупр, В', 'Pвых х2, МГц'],
         )
@@ -267,9 +269,33 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!J2:J{rows + 1}'),
             ],
             title='Относительный уровень 3й гармоники',
-            loc=top_left_cell.offset(15, 12).coordinate,
+            loc=top_left_cell.offset(dy, dx).coordinate,
             curve_labels=['Uпит = 4.7В'],
             ax_titles=['Uупр, В', 'Pвых х3, МГц'],
+        )
+
+        _add_chart(
+            ws=ws,
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
+            ys=[
+                Reference(ws, range_string=f'{ws.title}!E2:E{rows + 1}'),
+            ],
+            title='Ток потребления',
+            loc=top_left_cell.offset(0, 2 * dx).coordinate,
+            curve_labels=['Uпит = 4.7В'],
+            ax_titles=['Uупр, В', 'Iпот, мА'],
+        )
+
+        _add_chart(
+            ws=ws,
+            xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
+            ys=[
+                Reference(ws, range_string=f'{ws.title}!F2:F{rows}'),
+            ],
+            title='Чувствительность',
+            loc=top_left_cell.offset(dy, 2 * dx).coordinate,
+            curve_labels=['Uпит = 4.7В'],
+            ax_titles=['Uупр, В', 'S, МГц/В'],
         )
 
         wb.save(file_name)
