@@ -5,6 +5,7 @@ import pandas as pd
 from collections import defaultdict
 from openpyxl.chart import LineChart, Series, Reference
 from openpyxl.chart.axis import ChartLines
+from openpyxl.cell import Cell
 from textwrap import dedent
 
 from forgot_again.file import load_ast_if_exists, pprint_to_file, make_dirs, open_explorer_at
@@ -203,6 +204,8 @@ class MeasureResult:
         for row in out:
             ws.append(row)
 
+        top_left_cell: Cell = ws.cell(row=rows + 4, column=2)
+
         _add_chart(
             ws=ws,
             xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
@@ -212,7 +215,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!AA2:AA{rows + 1}'),
             ],
             title='Диапазон перестройки',
-            loc='B15',
+            loc=top_left_cell.offset(0, 0).coordinate,
             curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
             ax_titles=['Uупр, В', 'Fвых, МГц'],
         )
@@ -226,7 +229,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!AB2:AB{rows + 1}'),
             ],
             title='Мощность',
-            loc='M15',
+            loc=top_left_cell.offset(0, 12).coordinate,
             curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
             ax_titles=['Uупр, В', 'Pвых, дБм'],
         )
@@ -238,7 +241,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!I2:I{rows + 1}'),
             ],
             title='Относительный уровень 2й гармоники',
-            loc='B30',
+            loc=top_left_cell.offset(15, 0).coordinate,
             curve_labels=['Uпит = 4.7В'],
             ax_titles=['Uупр, В', 'Pвых х2, МГц'],
         )
@@ -250,7 +253,7 @@ class MeasureResult:
                 Reference(ws, range_string=f'{ws.title}!J2:J{rows + 1}'),
             ],
             title='Относительный уровень 3й гармоники',
-            loc='M30',
+            loc=top_left_cell.offset(15, 12).coordinate,
             curve_labels=['Uпит = 4.7В'],
             ax_titles=['Uупр, В', 'Pвых х3, МГц'],
         )
