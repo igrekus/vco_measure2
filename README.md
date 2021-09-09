@@ -12,8 +12,8 @@ TODO:
 - [x] rename measurement params
 - [x] группы параметров
 - [x] график гармоник -- выводить дельты
-- [x] вывод в эксель, поправить размерности ток и чувствительность
-- [x] эксель - добавить 2 графика ток от упр, чувствительность от упр
-- [x] эксель - перенести графики ниже таблицы
-- [x] эксель - последняя тачка не на графике
+- [x] .xlsx: fix Isrc, tune units
+- [x] .xlsx: add Ucontrol-Isrc, Ucontrol-Tune charts
+- [x] .xlsx: move tables below max row
+- [x] .xlsx: fix charts omitting the last row
 - [ ] удалить выпадающий список (?)
