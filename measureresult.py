@@ -38,9 +38,10 @@ class MeasureResult:
 
         self.data1 = defaultdict(list)
         self.data2 = defaultdict(list)
-
         self.data3 = dict()
         self.data4 = dict()
+        self.data5 = defaultdict(list)
+        self.data6 = defaultdict(list)
 
         self.adjustment = load_ast_if_exists('adjust.ini', default=None)
 
@@ -88,6 +89,17 @@ class MeasureResult:
 
         self.data1[u_src].append([u_control, f_tune])
         self.data2[u_src].append([u_control, p_out])
+        self.data5[u_src].append([u_control, i_src])
+
+        if len(self._processed):
+            # (f2 - f1) / (u2 - u1) * 100
+            last_point = self._processed[-1]
+            f1 = last_point['f_tune']
+            f2 = f_tune
+            u1 = last_point['u_control']
+            u2 = u_control
+            tune = (f2 - f1) / (u2 - u1) * 100
+            self.data6[u_src].append([u_control, tune])
         self._processed.append({**self._report})
 
     def clear(self):
@@ -106,6 +118,8 @@ class MeasureResult:
         self.data2.clear()
         self.data3.clear()
         self.data4.clear()
+        self.data5.clear()
+        self.data6.clear()
 
         self.adjustment = load_ast_if_exists('adjust.ini', default=None)
 
