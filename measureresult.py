@@ -49,15 +49,17 @@ class MeasureResult:
         return self.ready
 
     def _process(self):
-        harm_x2 = [list(d.values()) for d in self._raw_x2]
-        harm_x2 = _find_deltas(harm_x2, self._processed)
-        self.data3[1] = harm_x2
-        self._processed_x2 = harm_x2
+        for idx, harm_x2 in enumerate(self._raw_x2):
+            h_x2 = [list(d.values()) for d in harm_x2]
+            h_x2 = _find_deltas(h_x2, self._processed)
+            self.data3[idx] = h_x2
+            self._processed_x2.append(h_x2)
 
-        harm_x3 = [list(d.values()) for d in self._raw_x3]
-        harm_x3 = _find_deltas(harm_x3, self._processed)
-        self.data4[1] = harm_x3
-        self._processed_x3 = harm_x3
+        for idx, harm_x3 in enumerate(self._raw_x3):
+            h_x3 = [list(d.values()) for d in harm_x3]
+            h_x3 = _find_deltas(h_x3, self._processed)
+            self.data4[idx] = h_x3
+            self._processed_x2.append(h_x3)
 
         self.ready = True
 

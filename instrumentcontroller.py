@@ -208,7 +208,7 @@ class InstrumentController(QObject):
             pow_ = float(sa.query(":CALC:MARK1:Y?"))
             return freq, pow_
 
-        def measure_harmonics(multiplier):
+        def measure_harmonics(multiplier, pairs):
             print('measure harmonics:', multiplier)
             r = []
             sa.send(f':SENS:FREQ:SPAN {sa_span}')
@@ -282,8 +282,7 @@ class InstrumentController(QObject):
         src.send('OUTP ON')
 
         if mock_enabled:
-            with open('./mock_data/4.7-0-0.txt', mode='rt', encoding='utf-8') as f:
-            # with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
@@ -326,10 +325,40 @@ class InstrumentController(QObject):
         with open('out.txt', mode='wt', encoding='utf-8') as out_file:
             out_file.write(str(result))
 
-        pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_1]
+        harm_x2_totals = []
+        harm_x3_totals = []
 
-        result_harmonics_x2 = measure_harmonics(multiplier=2)
-        result_harmonics_x3 = measure_harmonics(multiplier=3)
+        pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_1]
+        result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
+        result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+        harm_x2_totals.append(result_harmonics_x2)
+        harm_x3_totals.append(result_harmonics_x3)
+        with open('./mock_data/x2_1.txt', mode='wt', encoding='utf-8') as f:
+            f.writelines(str(result_harmonics_x2))
+        with open('./mock_data/x3_1.txt', mode='wt', encoding='utf-8') as f:
+            f.writelines(str(result_harmonics_x3))
+
+        if u_src_drift_2:
+            pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_2]
+            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
+            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+            harm_x2_totals.append(result_harmonics_x2)
+            harm_x3_totals.append(result_harmonics_x3)
+            with open('./mock_data/x2_2.txt', mode='wt', encoding='utf-8') as f:
+                f.writelines(str(result_harmonics_x2))
+            with open('./mock_data/x3_2.txt', mode='wt', encoding='utf-8') as f:
+                f.writelines(str(result_harmonics_x3))
+
+        if u_src_drift_3:
+            pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_3]
+            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
+            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+            harm_x2_totals.append(result_harmonics_x2)
+            harm_x3_totals.append(result_harmonics_x3)
+            with open('./mock_data/x2_3.txt', mode='wt', encoding='utf-8') as f:
+                f.writelines(str(result_harmonics_x2))
+            with open('./mock_data/x3_3.txt', mode='wt', encoding='utf-8') as f:
+                f.writelines(str(result_harmonics_x3))
 
         if mock_enabled:
             with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
@@ -341,7 +370,7 @@ class InstrumentController(QObject):
         src.send('OUTPut OFF')
         sa.send(':CAL:AUTO ON')
 
-        return result, result_harmonics_x2, result_harmonics_x3
+        return result, harm_x2_totals, harm_x3_totals
 
     def _add_measure_point(self, data):
         print('measured point:', data)
