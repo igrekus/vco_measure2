@@ -41,15 +41,15 @@ class InstrumentController(QObject):
         self.secondaryParams = SecondaryParams(required={
             'sep_4': ['', {'value': None}],
             'u_src_drift_1': [
-                'Uп=',
+                'Uп1=',
                 {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 4.7, 'suffix': ' В'}
             ],
             'u_src_drift_2': [
-                'Uдр. мин=',
+                'Uп2=',
                 {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.0, 'suffix': ' В'}
             ],
             'u_src_drift_3': [
-                'Uдр. макс=',
+                'Uп3=',
                 {'start': 0.0, 'end': 10.0, 'step': 0.5, 'value': 5.3, 'suffix': ' В'}
             ],
             'i_src_max': [
@@ -71,19 +71,19 @@ class InstrumentController(QObject):
             ],
             'sep_2': ['', {'value': None}],
             'sa_min': [
-                'SA start=',
+                'Start=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
             'sa_max': [
-                'SA stop=',
+                'Stop=',
                 {'start': 0.0, 'end': 30.0, 'step': 0.5, 'value': 1.0, 'suffix': ' ГГц'}
             ],
             'sa_rlev': [
-                'SA ref lev=',
+                'Ref lev=',
                 {'start': -30.0, 'end': 30.0, 'step': 1.0, 'value': 10.0, 'suffix': ' дБ'}
             ],
             'sa_span': [
-                'SA span=',
+                'Span=',
                 {'start': 0.0, 'end': 30000.0, 'step': 1.0, 'value': 50.0, 'suffix': ' МГц'}
             ],
             'sep_3': ['', {'value': None}],
