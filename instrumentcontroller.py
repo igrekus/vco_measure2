@@ -307,7 +307,7 @@ class InstrumentController(QObject):
                 raw_point = {
                     'u_src': u_drift,
                     'u_control': u_control,
-                    'read_f': read_f,
+                    'read_f': read_f / MEGA,
                     'read_p': read_p,
                     'read_i': read_i,
                 }
