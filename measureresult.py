@@ -59,7 +59,7 @@ class MeasureResult:
             h_x3 = [list(d.values()) for d in harm_x3]
             h_x3 = _find_deltas(h_x3, self._processed)
             self.data4[idx] = h_x3
-            self._processed_x2.append(h_x3)
+            self._processed_x3.append(h_x3)
 
         self.ready = True
 
