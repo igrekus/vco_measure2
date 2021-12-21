@@ -173,25 +173,31 @@ class MeasureResult:
         except IndexError:
             pass
 
-        result_harmonics_x2 = [[u_dr_1] + row for row in self._processed_x2]
-        result_harmonics_x3 = [[u_dr_1] + row for row in self._processed_x3]
-
-        df_harm_2 = pd.DataFrame(result_harmonics_x2, columns=['Uпит, В', 'Uупр, В', 'Pвых_2, дБм'])
-        df_harm_3 = pd.DataFrame(result_harmonics_x3, columns=['Uпит, В', 'Uупр, В', 'Pвых_3, дБм'])
-
         df = pd.DataFrame(self._processed)
         df.columns=['Uпит, В', 'Uупр, В', 'Fвых, МГц', 'Pвых, дБм', 'Iпот, мА', ]
 
         df['fdiff'] = df.groupby('Uпит, В')['Fвых, МГц'].diff().shift(-1)
         df['udiff'] = df.groupby('Uпит, В')['Uупр, В'].diff().shift(-1)
-        df['S, МГц/В'] = df[df['fdiff'].notna()].apply(lambda row: (row['fdiff'] / row['udiff']) * 100, axis = 1)
+        df['S, МГц/В'] = df[df['fdiff'].notna()].apply(lambda row: (row['fdiff'] / row['udiff']) * 100, axis=1)
         df = df.drop(['fdiff', 'udiff'], axis=1)
+
+        result_harmonics_x2 = []
+        result_harmonics_x3 = []
+        for processed_x2, processed_x3, udr in zip(self._processed_x2, self._processed_x3, [u_dr_1, u_dr_2, u_dr_3]):
+            result_harmonics_x2 += [[udr] + row for row in processed_x2]
+            result_harmonics_x3 += [[udr] + row for row in processed_x3]
+
+        df_harm_2 = pd.DataFrame(result_harmonics_x2, columns=['Uпит, В', 'Uупр, В', 'Pвых_2, дБм'])
+        df_harm_3 = pd.DataFrame(result_harmonics_x3, columns=['Uпит, В', 'Uупр, В', 'Pвых_3, дБм'])
 
         df = pd.merge(df, df_harm_2, how='left', on=['Uпит, В', 'Uупр, В'])
         df = pd.merge(df, df_harm_3, how='left', on=['Uпит, В', 'Uупр, В'])
 
+        df.to_excel('out.xlsx', engine='openpyxl')
+
         df['Pвых_2отн, дБм'] = df[df['Pвых_2, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_2, дБм']), axis=1)
         df['Pвых_3отн, дБм'] = df[df['Pвых_3, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_3, дБм']), axis=1)
+
         df['S, МГц/В'] = df['S, МГц/В'].fillna(0)
 
         df_udr_1 = df[df['Uпит, В'] == u_dr_1]
