@@ -1,7 +1,9 @@
 import ast
 import time
+from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from forgot_again.file import load_ast_if_exists, pprint_to_file
@@ -32,11 +34,11 @@ class InstrumentController(QObject):
             'Источник': SourceFactory(addrs['Источник']),
         }
 
-        self.deviceParams = {
+        self.deviceParams = load_ast_if_exists('devices.ini', default={
             'ГУН': {
-                'F': 1,
+                'file': 'input.xlsx',
             },
-        }
+        })
 
         self.secondaryParams = SecondaryParams(required={
             'sep_4': ['', {'value': None}],
@@ -265,6 +267,8 @@ class InstrumentController(QObject):
         u_src_drift_2 = secondary['u_src_drift_2']
         u_src_drift_3 = secondary['u_src_drift_3']
 
+        file_name = param['file']
+
         u_control_values = [round(x, 2) for x in np.arange(start=u_tune_min, stop=u_tune_max + 0.002, step=u_tune_step)]
         u_drift_values = [u for u in [u_src_drift_1, u_src_drift_2, u_src_drift_3] if u]
 
@@ -274,6 +278,8 @@ class InstrumentController(QObject):
         src.send(f'APPLY p25v,{u_control_values[0]}V,{i_tune_max}A')
 
         sa.send(f'DISP:WIND:TRAC:Y:RLEV {sa_rlev}')
+        # sa.send(f'DISP:WIND:TRAC:X:OFFS {0}Hz')
+        # sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {0}db')
         sa.send(f':SENS:FREQ:STAR {sa_f_start}Hz')
         sa.send(f':SENS:FREQ:STOP {sa_f_stop}Hz')
         sa.send(':CAL:AUTO OFF')
@@ -285,6 +291,11 @@ class InstrumentController(QObject):
             with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
+
+        tmp = pd.read_excel(file_name, engine='openpyxl').to_dict('records')
+        offset = defaultdict(dict)
+        for row in tmp:
+            offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
 
         result = []
         for u_drift in u_drift_values:
@@ -300,6 +311,13 @@ class InstrumentController(QObject):
 
                 if not mock_enabled:
                     time.sleep(1)
+
+                x_off, y_off = offset.get(u_drift, {}).get(u_control, 0)
+                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off * MEGA}Hz')
+                sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
+
+                if not mock_enabled:
+                    time.sleep(0.1)
 
                 read_f, read_p = find_peak_read_marker()
                 read_i = float(src.query('MEAS:CURR? p6v'))
@@ -325,39 +343,63 @@ class InstrumentController(QObject):
         with open('out.txt', mode='wt', encoding='utf-8') as out_file:
             out_file.write(str(result))
 
+        offs_template = pd.DataFrame([{'Vcc': r['u_src'], 'Vctr': r['u_control'], 'Freq offs': 0, 'Pow offs': 0} for r in result])
+        offs_template.to_excel('template.xlsx', engine='openpyxl', index=False)
+
         harm_x2_totals = []
         harm_x3_totals = []
 
         pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_1]
         result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
         result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+
+        if mock_enabled:
+            with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
+            with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
+
         harm_x2_totals.append(result_harmonics_x2)
         harm_x3_totals.append(result_harmonics_x3)
-        with open('./mock_data/x2_1.txt', mode='wt', encoding='utf-8') as f:
+        with open('./x2_1.txt', mode='wt', encoding='utf-8') as f:
             f.writelines(str(result_harmonics_x2))
-        with open('./mock_data/x3_1.txt', mode='wt', encoding='utf-8') as f:
+        with open('./x3_1.txt', mode='wt', encoding='utf-8') as f:
             f.writelines(str(result_harmonics_x3))
 
         if u_src_drift_2:
             pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_2]
             result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
             result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+
+            if mock_enabled:
+                with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                    result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
+                with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                    result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
+
             harm_x2_totals.append(result_harmonics_x2)
             harm_x3_totals.append(result_harmonics_x3)
-            with open('./mock_data/x2_2.txt', mode='wt', encoding='utf-8') as f:
+            with open('./x2_2.txt', mode='wt', encoding='utf-8') as f:
                 f.writelines(str(result_harmonics_x2))
-            with open('./mock_data/x3_2.txt', mode='wt', encoding='utf-8') as f:
+            with open('./x3_2.txt', mode='wt', encoding='utf-8') as f:
                 f.writelines(str(result_harmonics_x3))
 
         if u_src_drift_3:
             pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_3]
             result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
             result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+
+            if mock_enabled:
+                with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                    result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
+                with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                    result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
+
             harm_x2_totals.append(result_harmonics_x2)
             harm_x3_totals.append(result_harmonics_x3)
-            with open('./mock_data/x2_3.txt', mode='wt', encoding='utf-8') as f:
+            with open('./x2_3.txt', mode='wt', encoding='utf-8') as f:
                 f.writelines(str(result_harmonics_x2))
-            with open('./mock_data/x3_3.txt', mode='wt', encoding='utf-8') as f:
+            with open('./x3_3.txt', mode='wt', encoding='utf-8') as f:
                 f.writelines(str(result_harmonics_x3))
 
         if mock_enabled:
