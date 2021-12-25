@@ -240,7 +240,7 @@ class MeasureResult:
             ],
             title='Диапазон перестройки',
             loc=top_left_cell.offset(0, 0).coordinate,
-            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'Fвых, МГц'],
         )
 
@@ -254,7 +254,7 @@ class MeasureResult:
             ],
             title='Мощность',
             loc=top_left_cell.offset(0, dx).coordinate,
-            curve_labels=['Uпит = 4.7В', 'Uпит = 5.0В', 'Uпит = 5.3В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'Pвых, дБм'],
         )
 
@@ -263,10 +263,12 @@ class MeasureResult:
             xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
                 Reference(ws, range_string=f'{ws.title}!I2:I{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!U2:U{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!AG2:AG{rows + 1}'),
             ],
             title='Относительный уровень 2й гармоники',
             loc=top_left_cell.offset(dy, 0).coordinate,
-            curve_labels=['Uпит = 4.7В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'Pвых х2, МГц'],
         )
 
@@ -275,10 +277,12 @@ class MeasureResult:
             xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
                 Reference(ws, range_string=f'{ws.title}!J2:J{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!V2:V{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!AH2:AH{rows + 1}'),
             ],
             title='Относительный уровень 3й гармоники',
             loc=top_left_cell.offset(dy, dx).coordinate,
-            curve_labels=['Uпит = 4.7В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'Pвых х3, МГц'],
         )
 
@@ -287,10 +291,12 @@ class MeasureResult:
             xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows + 1}'),
             ys=[
                 Reference(ws, range_string=f'{ws.title}!E2:E{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!Q2:Q{rows + 1}'),
+                Reference(ws, range_string=f'{ws.title}!AC2:AC{rows + 1}'),
             ],
             title='Ток потребления',
             loc=top_left_cell.offset(0, 2 * dx).coordinate,
-            curve_labels=['Uпит = 4.7В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'Iпот, мА'],
         )
 
@@ -299,10 +305,12 @@ class MeasureResult:
             xs=Reference(ws, range_string=f'{ws.title}!B2:B{rows}'),
             ys=[
                 Reference(ws, range_string=f'{ws.title}!F2:F{rows}'),
+                Reference(ws, range_string=f'{ws.title}!R2:R{rows}'),
+                Reference(ws, range_string=f'{ws.title}!AD2:AD{rows}'),
             ],
             title='Чувствительность',
             loc=top_left_cell.offset(dy, 2 * dx).coordinate,
-            curve_labels=['Uпит = 4.7В'],
+            curve_labels=[f'Uпит = {u_dr_1}В', f'Uпит = {u_dr_2}В', f'Uпит = {u_dr_3}В'],
             ax_titles=['Uупр, В', 'S, МГц/В'],
         )
 
