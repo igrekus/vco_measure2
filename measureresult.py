@@ -193,8 +193,6 @@ class MeasureResult:
         df = pd.merge(df, df_harm_2, how='left', on=['Uпит, В', 'Uупр, В'])
         df = pd.merge(df, df_harm_3, how='left', on=['Uпит, В', 'Uупр, В'])
 
-        df.to_excel('out.xlsx', engine='openpyxl')
-
         df['Pвых_2отн, дБм'] = df[df['Pвых_2, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_2, дБм']), axis=1)
         df['Pвых_3отн, дБм'] = df[df['Pвых_3, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_3, дБм']), axis=1)
 
@@ -210,10 +208,6 @@ class MeasureResult:
         udr_1_s = [df_udr_1.columns.values.tolist()] + df_udr_1.values.tolist()
         udr_2_s = [df_udr_2.columns.values.tolist()] + (df_udr_2.values.tolist() or [[''] * cols] * rows)
         udr_3_s = [df_udr_3.columns.values.tolist()] + (df_udr_3.values.tolist() or [[''] * cols] * rows)
-
-        print(udr_1_s)
-        print(udr_2_s)
-        print(udr_3_s)
 
         wb = openpyxl.Workbook()
         ws = wb.active
