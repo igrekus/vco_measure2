@@ -16,4 +16,6 @@ TODO:
 - [x] .xlsx: add Ucontrol-Isrc, Ucontrol-Tune charts
 - [x] .xlsx: move tables below max row
 - [x] .xlsx: fix charts omitting the last row
-- [ ] удалить выпадающий список (?)
+- [x] measure harmonics for all u_source values
+- [x] show all curves for all plots 
+- [x] implement adjustment templates
