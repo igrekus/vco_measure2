@@ -210,10 +210,10 @@ class InstrumentController(QObject):
             pow_ = float(sa.query(":CALC:MARK1:Y?"))
             return freq, pow_
 
-        def measure_harmonics(multiplier, pairs):
+        def measure_harmonics(multiplier, pairs, offset, u_drift):
             print('measure harmonics:', multiplier)
+            sa.send(f':SENS:FREQ:SPAN {sa_span}HZ')
             r = []
-            sa.send(f':SENS:FREQ:SPAN {sa_span}')
             for uc, f in pairs:
 
                 if token.cancelled:
@@ -227,8 +227,14 @@ class InstrumentController(QObject):
                 if not mock_enabled:
                     time.sleep(1)
 
+                sa.send(f'DISP:WIND:TRAC:X:OFFS {0}Hz')
+                sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {0}db')
                 f_xmul = f * multiplier
                 sa.send(f':SENS:FREQ:CENT {f_xmul}Hz')
+                x_off, y_off = offset.get(u_drift, {}).get(uc, (0, 0))
+                x_off *= MEGA
+                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off}Hz')
+                sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
                 if not mock_enabled:
                     time.sleep(0.5)
@@ -236,9 +242,11 @@ class InstrumentController(QObject):
                 sa.send('CALC:MARK1:MAX')
 
                 if not mock_enabled:
-                    time.sleep(0.05)
+                    time.sleep(0.1)
 
-                read_p = float(sa.query(f'CALC1:MARK1:Y?'))
+                read_p = float(sa.query(f'CALC:MARK1:Y?'))
+                # x1 = 1.747 G -> x1 + 1 G = 2.747
+                # x2 = 3.497 G -> x2 + 1 G = 4.497
 
                 point = {
                     'u_control': uc,
@@ -312,8 +320,9 @@ class InstrumentController(QObject):
                 if not mock_enabled:
                     time.sleep(1)
 
-                x_off, y_off = offset.get(u_drift, {}).get(u_control, 0)
-                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off * MEGA}Hz')
+                x_off, y_off = offset.get(u_drift, {}).get(u_control, (0, 0))
+                x_off = x_off * MEGA
+                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off}Hz')
                 sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
                 if not mock_enabled:
@@ -325,7 +334,7 @@ class InstrumentController(QObject):
                 raw_point = {
                     'u_src': u_drift,
                     'u_control': u_control,
-                    'read_f': read_f / MEGA,
+                    'read_f': read_f - x_off,
                     'read_p': read_p,
                     'read_i': read_i,
                 }
@@ -349,9 +358,9 @@ class InstrumentController(QObject):
         harm_x2_totals = []
         harm_x3_totals = []
 
-        pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_1]
-        result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
-        result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+        pairs = [[row['u_control'], row['read_f']] for row in result if row['u_src'] == u_src_drift_1]
+        result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs, offset=offset, u_drift=u_src_drift_1)
+        result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_1)
 
         if mock_enabled:
             with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
@@ -367,9 +376,9 @@ class InstrumentController(QObject):
             f.writelines(str(result_harmonics_x3))
 
         if u_src_drift_2:
-            pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_2]
-            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
-            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+            pairs = [[row['u_control'], row['read_f']] for row in result if row['u_src'] == u_src_drift_2]
+            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs, offset=offset, u_drift=u_src_drift_2)
+            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_2)
 
             if mock_enabled:
                 with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
@@ -385,9 +394,9 @@ class InstrumentController(QObject):
                 f.writelines(str(result_harmonics_x3))
 
         if u_src_drift_3:
-            pairs = [[row['u_control'], row['read_f'] * MEGA] for row in result if row['u_src'] == u_src_drift_3]
-            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs)
-            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs)
+            pairs = [[row['u_control'], row['read_f']] for row in result if row['u_src'] == u_src_drift_3]
+            result_harmonics_x2 = measure_harmonics(multiplier=2, pairs=pairs, offset=offset, u_drift=u_src_drift_3)
+            result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_3)
 
             if mock_enabled:
                 with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
