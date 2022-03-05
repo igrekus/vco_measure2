@@ -180,7 +180,7 @@ class MeasureResult:
 
         df['fdiff'] = df.groupby('Uпит, В')['Fвых, МГц'].diff().shift(-1)
         df['udiff'] = df.groupby('Uпит, В')['Uупр, В'].diff().shift(-1)
-        df['S, МГц/В'] = df[df['fdiff'].notna()].apply(lambda row: (row['fdiff'] / row['udiff']) * 100, axis=1)
+        df['S, МГц/В'] = df[df['fdiff'].notna()].apply(lambda row: (row['fdiff'] / row['udiff']), axis=1)
         df = df.drop(['fdiff', 'udiff'], axis=1)
 
         result_harmonics_x2 = []
