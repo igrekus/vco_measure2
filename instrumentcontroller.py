@@ -201,8 +201,10 @@ class InstrumentController(QObject):
 
     def _measure_tune(self, token, param, secondary):
 
-        def find_peak_read_marker():
+        def find_peak_read_marker(first=False):
             sa.send("CALC:MARK1:MAX")
+            if first:
+                time.sleep(1)
             if not mock_enabled:
                 time.sleep(0.1)
 
@@ -305,6 +307,7 @@ class InstrumentController(QObject):
         for row in tmp:
             offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
 
+        first = True
         result = []
         for u_drift in u_drift_values:
             for u_control in u_control_values:
@@ -331,7 +334,8 @@ class InstrumentController(QObject):
                 if not mock_enabled:
                     time.sleep(0.1)
 
-                read_f, read_p = find_peak_read_marker()
+                read_f, read_p = find_peak_read_marker(first)
+                first = False
                 read_i = float(src.query('MEAS:CURR? p6v'))
 
                 raw_point = {
