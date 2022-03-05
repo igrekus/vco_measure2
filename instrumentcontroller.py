@@ -231,11 +231,16 @@ class InstrumentController(QObject):
 
                 sa.send(f'DISP:WIND:TRAC:X:OFFS {0}Hz')
                 sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {0}db')
-                f_xmul = f * multiplier
-                sa.send(f':SENS:FREQ:CENT {f_xmul}Hz')
+
                 x_off, y_off = offset.get(u_drift, {}).get(uc, (0, 0))
                 x_off *= MEGA
-                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off}Hz')
+                f -= x_off
+                f_xmul = f * multiplier
+
+                sa.send(f':SENS:FREQ:CENT {f_xmul}Hz')
+                sa.send(f':SENS:FREQ:SPAN {sa_span}HZ')
+
+                sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off * multiplier}Hz')
                 sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
                 if not mock_enabled:
