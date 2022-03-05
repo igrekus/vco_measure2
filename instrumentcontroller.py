@@ -19,7 +19,8 @@ MEGA = 1_000_000
 KILO = 1_000
 MILLI = 1 / 1_000
 
-# TODO fix harmonics .xlsx export
+# + TODO fix harmonics .xlsx export
+# TODO add separate offset settings for x2 and x3
 
 
 class InstrumentController(QObject):
