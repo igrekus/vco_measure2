@@ -53,13 +53,13 @@ class MeasureResult:
             h_x2 = [list(d.values()) for d in harm_x2]
             h_x2 = _find_deltas(h_x2, self._processed)
             self.data3[idx] = h_x2
-            self._processed_x2.append(h_x2)
+            self._processed_x2.append([[point[0], point[1], raw['read_p']] for point, raw in zip(h_x2, harm_x2)])
 
         for idx, harm_x3 in enumerate(self._raw_x3):
             h_x3 = [list(d.values()) for d in harm_x3]
             h_x3 = _find_deltas(h_x3, self._processed)
             self.data4[idx] = h_x3
-            self._processed_x3.append(h_x3)
+            self._processed_x3.append([[point[0], point[1], raw['read_p']] for point, raw in zip(h_x3, harm_x3)])
 
         self.ready = True
 
@@ -187,14 +187,11 @@ class MeasureResult:
             result_harmonics_x2 += [[udr] + row for row in processed_x2]
             result_harmonics_x3 += [[udr] + row for row in processed_x3]
 
-        df_harm_2 = pd.DataFrame(result_harmonics_x2, columns=['Uпит, В', 'Uупр, В', 'Pвых_2, дБм'])
-        df_harm_3 = pd.DataFrame(result_harmonics_x3, columns=['Uпит, В', 'Uупр, В', 'Pвых_3, дБм'])
+        df_harm_2 = pd.DataFrame(result_harmonics_x2, columns=['Uпит, В', 'Uупр, В', 'Pвых_2отн, дБм', 'Pвых_2, дБм'])
+        df_harm_3 = pd.DataFrame(result_harmonics_x3, columns=['Uпит, В', 'Uупр, В', 'Pвых_3отн, дБм', 'Pвых_3, дБм'])
 
         df = pd.merge(df, df_harm_2, how='left', on=['Uпит, В', 'Uупр, В'])
         df = pd.merge(df, df_harm_3, how='left', on=['Uпит, В', 'Uупр, В'])
-
-        df['Pвых_2отн, дБм'] = df[df['Pвых_2, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_2, дБм']), axis=1)
-        df['Pвых_3отн, дБм'] = df[df['Pвых_3, дБм'].notna()].apply(lambda row: -(row['Pвых, дБм'] - row['Pвых_3, дБм']), axis=1)
 
         df['S, МГц/В'] = df['S, МГц/В'].fillna(0)
 
@@ -334,4 +331,4 @@ def _add_chart(ws, xs, ys, title, loc, curve_labels=None, ax_titles=None):
 
 
 def _find_deltas(harm, origin):
-    return [[harm[0], -(main['p_out'] - harm[1])] for harm, main in zip(harm, origin)]
+    return [[main['u_control'], -(main['p_out'] - harm[1])] for harm, main in zip(harm, origin)]
