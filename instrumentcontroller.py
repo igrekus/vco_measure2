@@ -325,6 +325,9 @@ class InstrumentController(QObject):
                 sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off}Hz')
                 sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
+                sa.send(f':SENS:FREQ:STAR {sa_f_start}Hz')
+                sa.send(f':SENS:FREQ:STOP {sa_f_stop}Hz')
+
                 if not mock_enabled:
                     time.sleep(0.1)
 
@@ -334,7 +337,7 @@ class InstrumentController(QObject):
                 raw_point = {
                     'u_src': u_drift,
                     'u_control': u_control,
-                    'read_f': read_f - x_off,
+                    'read_f': read_f,
                     'read_p': read_p,
                     'read_i': read_i,
                 }
