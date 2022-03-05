@@ -52,7 +52,7 @@ class PrimaryPlotWidget(QWidget):
         self._plot_00.showGrid(x=True, y=True)
         self._vb_00 = self._plot_00.vb
         rect = self._vb_00.viewRect()
-        self._plot_00.addLegend(offset=(rect.x() + rect.width() - 50, rect.y() + 30))
+        self._plot_00.addLegend(offset=(rect.x() + 30, rect.y() + 30))
         self._vLine_00 = pg.InfiniteLine(angle=90, movable=False)
         self._hLine_00 = pg.InfiniteLine(angle=0, movable=False)
         self._plot_00.addItem(self._vLine_00, ignoreBounds=True)
@@ -94,7 +94,7 @@ class PrimaryPlotWidget(QWidget):
         self._plot_10.showGrid(x=True, y=True)
         self._vb_10 = self._plot_10.vb
         rect = self._vb_10.viewRect()
-        self._plot_10.addLegend(offset=(rect.x() + 50, rect.y() + rect.height() - 30))
+        self._plot_10.addLegend(offset=(rect.x() + rect.width() - 50, rect.y() + 30))
         self._vLine_10 = pg.InfiniteLine(angle=90, movable=False)
         self._hLine_10 = pg.InfiniteLine(angle=0, movable=False)
         self._plot_10.addItem(self._vLine_10, ignoreBounds=True)
@@ -108,7 +108,7 @@ class PrimaryPlotWidget(QWidget):
         self._plot_11.showGrid(x=True, y=True)
         self._vb_11 = self._plot_11.vb
         rect = self._vb_11.viewRect()
-        self._plot_11.addLegend(offset=(rect.x() + 50, rect.y() + rect.height() - 30))
+        self._plot_11.addLegend(offset=(rect.x() + rect.width() - 50, rect.y() + 30))
         self._vLine_11 = pg.InfiniteLine(angle=90, movable=False)
         self._hLine_11 = pg.InfiniteLine(angle=0, movable=False)
         self._plot_11.addItem(self._vLine_11, ignoreBounds=True)
@@ -122,7 +122,7 @@ class PrimaryPlotWidget(QWidget):
         self._plot_12.showGrid(x=True, y=True)
         self._vb_12 = self._plot_12.vb
         rect = self._vb_12.viewRect()
-        self._plot_12.addLegend(offset=(rect.x() + 50, rect.y() + rect.height() - 30))
+        self._plot_12.addLegend(offset=(rect.x() + rect.width() - 50, rect.y() + 30))
         self._vLine_12 = pg.InfiniteLine(angle=90, movable=False)
         self._hLine_12 = pg.InfiniteLine(angle=0, movable=False)
         self._plot_12.addItem(self._vLine_12, ignoreBounds=True)
