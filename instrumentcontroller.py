@@ -1,6 +1,8 @@
 import ast
 import time
+
 from collections import defaultdict
+from os.path import isfile
 
 import numpy as np
 import pandas as pd
@@ -310,10 +312,12 @@ class InstrumentController(QObject):
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
-        tmp = pd.read_excel(file_name, engine='openpyxl').to_dict('records')
         offset = defaultdict(dict)
-        for row in tmp:
-            offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
+        if isfile(file_name):
+            print(f'found {file_name}, load offsets')
+            tmp = pd.read_excel(file_name, engine='openpyxl').to_dict('records')
+            for row in tmp:
+                offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
 
         first = True
         result = []
