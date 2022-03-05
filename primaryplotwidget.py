@@ -251,8 +251,8 @@ class PrimaryPlotWidget(QWidget):
         _plot_curves(self._controller.result.data1, self._curves_00, self._plot_00, prefix='Uпит= ', suffix=' В')
         _plot_curves(self._controller.result.data2, self._curves_01, self._plot_01, prefix='Uпит= ', suffix=' В')
         _plot_curves(self._controller.result.data5, self._curves_02, self._plot_02, prefix='Uпит= ', suffix=' В')
-        _plot_curves(self._controller.result.data3, self._curves_10, self._plot_10, prefix='', suffix='')
-        _plot_curves(self._controller.result.data4, self._curves_11, self._plot_11, prefix='', suffix='')
+        _plot_curves(self._controller.result.data3, self._curves_10, self._plot_10, prefix='Uпит= ', suffix=' В')
+        _plot_curves(self._controller.result.data4, self._curves_11, self._plot_11, prefix='Uпит= ', suffix=' В')
         _plot_curves(self._controller.result.data6, self._curves_12, self._plot_12, prefix='Uпит= ', suffix=' В')
 
 
