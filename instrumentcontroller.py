@@ -244,7 +244,7 @@ class InstrumentController(QObject):
                 sa.send(f':SENS:FREQ:SPAN {sa_span}HZ')
 
                 sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off * multiplier}Hz')
-                sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
+                # sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
                 if not mock_enabled:
                     time.sleep(0.5)
