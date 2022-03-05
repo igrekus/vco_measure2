@@ -304,7 +304,7 @@ class InstrumentController(QObject):
         src.send('OUTP ON')
 
         if mock_enabled:
-            with open('./mock_data/4.7-5.0-5.3.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/4.75-5.25-0.txt', mode='rt', encoding='utf-8') as f:
                 index = 0
                 mocked_raw_data = ast.literal_eval(''.join(f.readlines()))
 
@@ -378,9 +378,9 @@ class InstrumentController(QObject):
         result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_1)
 
         if mock_enabled:
-            with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/x2_1.txt', mode='rt', encoding='utf-8') as f:
                 result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
-            with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+            with open('./mock_data/x3_2.txt', mode='rt', encoding='utf-8') as f:
                 result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
 
         harm_x2_totals.append(result_harmonics_x2)
@@ -396,9 +396,9 @@ class InstrumentController(QObject):
             result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_2)
 
             if mock_enabled:
-                with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                with open('./mock_data/x2_2.txt', mode='rt', encoding='utf-8') as f:
                     result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
-                with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                with open('./mock_data/x3_2.txt', mode='rt', encoding='utf-8') as f:
                     result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
 
             harm_x2_totals.append(result_harmonics_x2)
@@ -414,9 +414,9 @@ class InstrumentController(QObject):
             result_harmonics_x3 = measure_harmonics(multiplier=3, pairs=pairs, offset=offset, u_drift=u_src_drift_3)
 
             if mock_enabled:
-                with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
+                with open('./mock_data/x2_3.txt', mode='rt', encoding='utf-8') as f:
                     result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
-                with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
+                with open('./mock_data/x3_3.txt', mode='rt', encoding='utf-8') as f:
                     result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
 
             harm_x2_totals.append(result_harmonics_x2)
@@ -426,11 +426,6 @@ class InstrumentController(QObject):
             with open('./x3_3.txt', mode='wt', encoding='utf-8') as f:
                 f.writelines(str(result_harmonics_x3))
 
-        if mock_enabled:
-            with open('./mock_data/x2.txt', mode='rt', encoding='utf-8') as f:
-                result_harmonics_x2 = ast.literal_eval(''.join(f.readlines()))
-            with open('./mock_data/x3.txt', mode='rt', encoding='utf-8') as f:
-                result_harmonics_x3 = ast.literal_eval(''.join(f.readlines()))
         # endregion
 
         src.send('OUTPut OFF')
