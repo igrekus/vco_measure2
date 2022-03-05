@@ -321,8 +321,10 @@ class InstrumentController(QObject):
                 src.send(f'APPLY p25v,{u_control}V,{i_tune_max}A')
 
                 if not mock_enabled:
-                    time.sleep(1)
+                    time.sleep(0.8)
 
+                # sa.send(f'DISP:WIND:TRAC:X:OFFS {0}Hz')
+                # sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {0}db')
                 x_off, y_off = offset.get(u_drift, {}).get(u_control, (0, 0))
                 x_off = x_off * MEGA
                 sa.send(f'DISP:WIND:TRAC:X:OFFS {x_off}Hz')
