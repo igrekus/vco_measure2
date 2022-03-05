@@ -203,9 +203,10 @@ class InstrumentController(QObject):
 
         def find_peak_read_marker(first=False):
             sa.send("CALC:MARK1:MAX")
-            if first:
-                time.sleep(1)
+
             if not mock_enabled:
+                if first:
+                    time.sleep(1)
                 time.sleep(0.1)
 
             freq = float(sa.query(":CALC:MARK1:X?"))
