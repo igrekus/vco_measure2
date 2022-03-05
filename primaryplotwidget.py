@@ -115,7 +115,7 @@ class PrimaryPlotWidget(QWidget):
         self._plot_11.addItem(self._hLine_11, ignoreBounds=True)
         self._proxy_11 = pg.SignalProxy(self._plot_11.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved_11)
 
-        self._plot_12.setLabel('left', 'Чувств., дБ/В', **self.label_style)
+        self._plot_12.setLabel('left', 'Чувств., МГц/В', **self.label_style)
         self._plot_12.setLabel('bottom', 'Uупр, В', **self.label_style)
         self._plot_12.enableAutoRange('x')
         self._plot_12.enableAutoRange('y')
@@ -253,7 +253,7 @@ class PrimaryPlotWidget(QWidget):
         _plot_curves(self._controller.result.data5, self._curves_02, self._plot_02, prefix='Uпит= ', suffix=' В')
         _plot_curves(self._controller.result.data3, self._curves_10, self._plot_10, prefix='', suffix='')
         _plot_curves(self._controller.result.data4, self._curves_11, self._plot_11, prefix='', suffix='')
-        _plot_curves(self._controller.result.data6, self._curves_12, self._plot_12, prefix='Гgbn= ', suffix=' В')
+        _plot_curves(self._controller.result.data6, self._curves_12, self._plot_12, prefix='Uпит= ', suffix=' В')
 
 
 def _plot_curves(datas, curves, plot, prefix='', suffix=''):
