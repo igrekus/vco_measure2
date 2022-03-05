@@ -17,6 +17,8 @@ MEGA = 1_000_000
 KILO = 1_000
 MILLI = 1 / 1_000
 
+# TODO fix harmonics .xlsx export
+
 
 class InstrumentController(QObject):
     pointReady = pyqtSignal()
