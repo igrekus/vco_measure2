@@ -217,7 +217,7 @@ class InstrumentController(QObject):
             if first:
                 sa.send("CALC:MARK1:MAX")
                 if not mock_enabled:
-                    time.sleep(2)
+                    time.sleep(1)
 
             freq = float(sa.query(":CALC:MARK1:X?"))
             pow_ = float(sa.query(":CALC:MARK1:Y?"))
@@ -255,7 +255,7 @@ class InstrumentController(QObject):
                 # sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {y_off}db')
 
                 if not mock_enabled:
-                    time.sleep(0.8)
+                    time.sleep(0.3)
 
                 sa.send('CALC:MARK1:MAX')
 
@@ -339,7 +339,7 @@ class InstrumentController(QObject):
                 src.send(f'APPLY p25v,{u_control}V,{i_tune_max}A')
 
                 if not mock_enabled:
-                    time.sleep(2)
+                    time.sleep(1)
 
                 # sa.send(f'DISP:WIND:TRAC:X:OFFS {0}Hz')
                 # sa.send(f'DISP:WIND:TRAC:Y:RLEV:OFFS {0}db')
