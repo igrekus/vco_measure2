@@ -325,9 +325,9 @@ class InstrumentController(QObject):
             for row in tmp:
                 offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
 
-        first = True
         result = []
         for u_drift in u_drift_values:
+            first = True
             for u_control in u_control_values:
 
                 if token.cancelled:
@@ -375,6 +375,9 @@ class InstrumentController(QObject):
                 self._add_measure_point(raw_point)
 
                 result.append(raw_point)
+
+            if not mock_enabled:
+                time.sleep(5)
 
         with open('out.txt', mode='wt', encoding='utf-8') as out_file:
             out_file.write(str(result))
