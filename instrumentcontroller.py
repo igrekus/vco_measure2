@@ -385,6 +385,8 @@ class InstrumentController(QObject):
         offs_template = pd.DataFrame([{'Vcc': r['u_src'], 'Vctr': r['u_control'], 'Freq offs': 0, 'Pow offs': 0} for r in result])
         offs_template.to_excel('template.xlsx', engine='openpyxl', index=False)
 
+        # -- measure harmonics --
+
         harm_x2_totals = []
         harm_x3_totals = []
 
