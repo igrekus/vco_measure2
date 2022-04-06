@@ -207,7 +207,7 @@ class InstrumentController(QObject):
     def _measure_tune(self, token, param, secondary):
 
         def find_peak_read_marker(first=False):
-            sa.send("CALC:MARK1:MAX")
+            sa.send('CALC:MARK1:MAX')
 
             if not mock_enabled:
                 if first:
@@ -215,12 +215,12 @@ class InstrumentController(QObject):
                 time.sleep(0.4)
 
             if first:
-                sa.send("CALC:MARK1:MAX")
+                sa.send('CALC:MARK1:MAX')
                 if not mock_enabled:
                     time.sleep(2)
 
-            freq = float(sa.query(":CALC:MARK1:X?"))
-            pow_ = float(sa.query(":CALC:MARK1:Y?"))
+            freq = float(sa.query(':CALC:MARK1:X?'))
+            pow_ = float(sa.query(':CALC:MARK1:Y?'))
             return freq, pow_
 
         def measure_harmonics(multiplier, pairs, offset, u_drift):
