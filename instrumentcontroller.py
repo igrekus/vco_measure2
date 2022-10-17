@@ -207,7 +207,7 @@ class InstrumentController(QObject):
     def _measure_tune(self, token, param, secondary):
 
         def find_peak_read_marker(first=False):
-            sa.send("CALC:MARK1:MAX")
+            sa.send('CALC:MARK1:MAX')
 
             if not mock_enabled:
                 if first:
@@ -215,12 +215,12 @@ class InstrumentController(QObject):
                 time.sleep(0.4)
 
             if first:
-                sa.send("CALC:MARK1:MAX")
+                sa.send('CALC:MARK1:MAX')
                 if not mock_enabled:
                     time.sleep(1)
 
-            freq = float(sa.query(":CALC:MARK1:X?"))
-            pow_ = float(sa.query(":CALC:MARK1:Y?"))
+            freq = float(sa.query(':CALC:MARK1:X?'))
+            pow_ = float(sa.query(':CALC:MARK1:Y?'))
             return freq, pow_
 
         def measure_harmonics(multiplier, pairs, offset, u_drift):
@@ -325,9 +325,9 @@ class InstrumentController(QObject):
             for row in tmp:
                 offset[row['Vcc']][row['Vctr']] = (row['Freq offs'], row['Pow offs'])
 
-        first = True
         result = []
         for u_drift in u_drift_values:
+            first = True
             for u_control in u_control_values:
 
                 if token.cancelled:
@@ -376,11 +376,16 @@ class InstrumentController(QObject):
 
                 result.append(raw_point)
 
+            if not mock_enabled:
+                time.sleep(5)
+
         with open('out.txt', mode='wt', encoding='utf-8') as out_file:
             out_file.write(str(result))
 
         offs_template = pd.DataFrame([{'Vcc': r['u_src'], 'Vctr': r['u_control'], 'Freq offs': 0, 'Pow offs': 0} for r in result])
         offs_template.to_excel('template.xlsx', engine='openpyxl', index=False)
+
+        # -- measure harmonics --
 
         harm_x2_totals = []
         harm_x3_totals = []
