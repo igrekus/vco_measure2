@@ -102,7 +102,7 @@ class MeasureResult:
             f2 = f_tune
             u1 = last_point['u_control']
             u2 = u_control
-            tune = (f2 - f1) / (u2 - u1) * 100
+            tune = (f2 - f1) / (u2 - u1)
             self.data6[u_src].append([u_control, tune])
         self._processed.append({**self._report})
 
